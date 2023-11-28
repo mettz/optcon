@@ -59,48 +59,48 @@ def dynamics(xx, uu):
     # u[1] = Fx
 
     # Euler discretization (we use it since the equations become simpler)
-    # x_dot = V * cos(beta) * cos(psi) - V * sin(beta) * sin(psi)
-    x_dot = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
+    # x_dot = V * cos(beta) * cos(psi) - V * sin(beta) * sin(psi) # Continuous time
+    x_dot = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi)) # Discrete time
 
-    # y_dot = V * cos(beta) * sin(psi) + V * sin(beta) * cos(psi)
-    y_dot = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi))
+    # y_dot = V * cos(beta) * sin(psi) + V * sin(beta) * cos(psi) # Continuous time
+    y_dot = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi)) # Discrete time
 
-    # psi_dot = x[5]
-    psi_dot = psi + dt * psi_dot
+    # psi_dot = psi_dot # Continuous time
+    psi_dot = psi + dt * psi_dot # Discrete time
 
-    # m * V_dot = Fy,r * sin(beta) + Fx * cos(beta - delta) + Fy,f * sin(beta - delta)
-    V_dot = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta)))
+    # mass * V_dot = Fyr * sin(beta) + Fx * cos(beta - delta) + Fyf * sin(beta - delta) # Continuous time
+    V_dot = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta))) # Discrete time
 
-    # beta_dot = 1 / (m * V) * (Fy,r * cos(beta) + Fy,f * cos(beta - delta) - Fx * sin(beta - delta)) - psi_dot
-    beta_dot = beta + dt * (1 / (mass * V) * (Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)
+    # beta_dot = 1 / (mass * V) * (Fy,r * cos(beta) + Fy,f * cos(beta - delta) - Fx * sin(beta - delta)) - psi_dot # Continuous time
+    beta_dot = beta + dt * (1 / (mass * V) * ((Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)) # Discrete time
 
-    # Iz * psi_dot_dot = (Fx * sin(delta) + Fy,f * cos(delta)) * a - Fy,r * b
-    psi_dot_dot = psi_dot + dt * ((1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b))
+    # Iz * psi_dot_dot = (Fx * sin(delta) + Fy,f * cos(delta)) * a - Fy,r * b # Continuous time
+    psi_dot_dot = psi_dot + dt * ((1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)) # Discrete time
 
-    # Computation of the gradient of the non discretized dynamics equations
-    nabla0 = np.array(
-        [
+    # Computation of the gradient of the discretized dynamics equations
+    nabla0 = np.array( # Derivate of x_dot with respect to (x,y,psi,V,beta,psi_dot)
+        [ 
+            1,
             0,
+            -dt * V * (np.cos(beta) * np.sin(psi) + np.sin(beta) * np.cos(psi)),
+            dt * (np.cos(beta) * np.cos(psi) - np.sin(beta) * np.sin(psi)),
+            -dt * V (np.sin(beta) * np.cos(psi) - np.cos(beta) * np.sin(psi)),
             0,
-            -V * np.cos(beta) * np.sin(psi) - V * np.sin(beta) * np.cos(psi),
-            np.cos(beta) * np.cos(psi) - np.sin(beta) * np.sin(psi),
-            -V * np.sin(beta) * np.cos(psi) - V * np.cos(beta) * np.sin(psi),
-            0,
-        ]
+        ] #OK
     )
-    nabla1 = np.array(
-        [
+    nabla1 = np.array( # Derivate of y_dot with respect to (x,y,psi,V,beta,psi_dot)
+        [ 
             0,
+            1,
+            dt * V * (np.cos(beta) * np.cos(psi) - np.sin(beta) * np.sin(psi)),
+            dt * (np.cos(beta) * np.sin(psi) + np.sin(beta) * np.cos(psi)),
+            -dt * V * (np.sin(beta) * np.sin(psi) - V * np.cos(beta) * np.cos(psi)),
             0,
-            V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi),
-            np.cos(beta) * np.sin(psi) + np.sin(beta) * np.cos(psi),
-            -V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi),
-            0,
-        ]
+        ] #OK
     )
-    nabla2 = np.array([0, 0, 0, 0, 0, 1])
-    nabla3 = np.array(
-        [
+    nabla2 = np.array([0, 0, 1, 0, 0, dt]) # Derivate of psi_dot with respect to (x,y,psi,V,beta,psi_dot) #OK 
+    nabla3 = np.array( # Derivate of V_dot with respect to (x,y,psi,V,beta,psi_dot)
+        [ #CONTROLLARE E AGGIUNGERE I DT
             0,
             0,
             0,
@@ -109,8 +109,8 @@ def dynamics(xx, uu):
             0,
         ]
     )
-    nabla4 = np.array(
-        [
+    nabla4 = np.array( # Derivate of beta_dot with respect to (x,y,psi,V,beta,psi_dot)
+        [ #CONTROLLARE E AGGIUNGERE I DT
             0,
             0,
             0,
@@ -119,7 +119,16 @@ def dynamics(xx, uu):
             -1,
         ]
     )
-    nabla5 = np.array([0, 0, 0, 0, 0, 1])
+    nabla5 = np.array( # Derivate of psi_dot_dot with respect to (x,y,psi,V,beta,psi_dot) 
+        [ #CONTROLLARE E AGGIUNGERE I DT
+            0,
+            0,
+            0,
+            psi_dot * a * (np.cos(beta) * a + 1) * b  ,
+            0,
+            1
+         ]
+        ) 
 
     # Code for debugging and testing
     # print('nabla0', nabla0.shape)
