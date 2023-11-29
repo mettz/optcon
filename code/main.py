@@ -20,9 +20,9 @@ beta_des = 20.0
 V_des = 1.0
 
 # Definition of the state initial conditions
-x_init = 0.0
-y_init = 0.0
-psi_init = 0.0
+x_des = 10.0
+y_des = 10.0
+psi_des = 45.0
 psi_dot_init = 0.0
 
 
@@ -72,7 +72,7 @@ def nonlinear_system_continuous(variables):
 def find_equilibrium_point(f):
     # Initial random guess for the equilibrium point
     # initial_guess = np.random.randint(10, size=8)
-    initial_guess = np.array([0, 0, 0])  # [x:(psi_dot), u:(delta, Fx)] #Notarstefano ha detto di imporre beta e V
+    initial_guess = np.array([0, 0, 0])  # [x:(psi_dot), u:(delta, Fx)]
     print("Initial guess:", initial_guess)
     equilibrium_point = fsolve(f, initial_guess)
     return equilibrium_point
@@ -84,16 +84,20 @@ def find_equilibrium_point(f):
 
 
 def plot_equilibria(equilibrium_point):
-    # Plot the equilibrium point
-    x, y, psi, psi_dot, delta, Fx = equilibrium_point
-    xx = np.array([x_init, y_init, psi_init, V_des, beta_des, psi_dot_init])
+    # Plot the equilibrium points
+    psi_dot, delta, Fx = equilibrium_point
+    xx = np.array([x_des, y_des, psi_des, V_des, beta_des, psi_dot])
     uu = np.array([delta, Fx])
 
-    steps = np.linspace(0, 500, 1000000)
+    steps = np.linspace(0, 50, 5000)
     trajectory = np.zeros((len(steps), len(xx)))
 
+    xx2 = np.array([0, 0, 0, 2, 10, 5])
+    uu2 = np.array([10, 1])
+
     for i in range(len(steps)):
-        xx_plus = dynamics_continuous(xx, uu)
+        xx_plus = dynamics(xx2, uu2)
+        #xx_plus = dynamics(xx, uu)
         trajectory[i, :] = xx_plus
         xx = xx_plus
 
@@ -105,6 +109,9 @@ def plot_equilibria(equilibrium_point):
     plt.plot(steps, trajectory[:, 3], label="V")
     plt.plot(steps, trajectory[:, 4], label="beta")
     plt.plot(steps, trajectory[:, 5], label="psi_dot")
+    plt.xlabel("Time")
+    plt.ylabel("State variables")
+    plt.ylim([-100, 100])
     plt.grid()
     plt.legend()
     plt.show()
@@ -119,4 +126,4 @@ if __name__ == "__main__":
     print("Equilibrium Point Continuous: ", equilibrium_point_continuous)
     print("Diff: ", np.isclose(nonlinear_system_continuous(equilibrium_point_continuous), np.zeros(3)))
 
-    # plot_equilibria(equilibrium_point_continuos)
+    plot_equilibria(equilibrium_point_continuous)

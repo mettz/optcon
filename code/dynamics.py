@@ -68,10 +68,10 @@ def dynamics(xx, uu):
     V_plus = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta))) # Discrete time
 
     # beta_dot = 1 / (mass * V) * (Fy,r * cos(beta) + Fy,f * cos(beta - delta) - Fx * sin(beta - delta)) - psi_dot # Continuous time
-    beta_plus = beta + dt * (1 / (mass * V) * ((Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)) # Discrete time
+    beta_plus = beta + dt * ((1 / (mass * V) * (Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)) # Discrete time
 
     # Iz * psi_dot_dot = (Fx * sin(delta) + Fy,f * cos(delta)) * a - Fy,r * b # Continuous time
-    psi_dot_plus = psi_dot + dt * ((1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)) # Discrete time
+    psi_dot_plus = psi_dot + dt * (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b) # Discrete time
 
     # Computation of the gradient of the discretized dynamics equations
     # nabla0 = np.array( # Derivate of x_dot with respect to (x,y,psi,V,beta,psi_dot)
