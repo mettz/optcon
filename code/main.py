@@ -20,17 +20,6 @@ g = 9.81  # m/s^2
 # Definition of discretization step
 dt = 1e-3
 
-# We impose beta and V to compute the equilibrium point
-beta_des = 0.0
-V_des = 1.0
-
-# Definition of the state initial conditions
-x_des = 10.0
-y_des = 10.0
-psi_des = 45.0
-psi_dot_init = 0.0
-
-
 def nonlinear_system_discretized(variables, beta_des, V_des):
     # Define your nonlinear system of equations with inputs
     psi_dot, delta, Fx = variables
@@ -83,11 +72,51 @@ def find_equilibrium_point(f, **kwargs):
     equilibrium_point = fsolve(f, initial_guess, args=args)
     return equilibrium_point
 
+#Debug Luca
+#===== Plots of the equilibrium points using equilibria as initial conditions =========
+def plot_with_equilibria(equilibrium_point):
+    # Plot the equilibrium points
+        psi_dot, delta, Fx = equilibrium_point
+        xx = np.array([0, 0, 0, V_des, beta_des, psi_dot])
+        uu = np.array([delta, Fx])
+
+        steps = np.linspace(0, 100, 100000)
+        trajectory = np.zeros((len(steps), len(xx)))
+
+        for i in range(len(steps)):
+            xx_plus = dynamics(xx, uu)
+            trajectory[i, :] = xx_plus
+            xx = xx_plus
+
+        plt.figure()
+        plt.clf()
+        plt.plot(steps, trajectory[:, 0], label="x")
+        plt.plot(steps, trajectory[:, 1], label="y")
+        plt.plot(steps, trajectory[:, 3], label="V")
+        plt.plot(steps, trajectory[:, 4], label="beta")
+        plt.plot(steps, trajectory[:, 5], label="psi_dot")
+        plt.xlabel("Time")
+        plt.ylabel("State variables")
+        plt.title("State variables at the equilibrium")
+        plt.ylim([-250, 250])
+        plt.grid()
+        plt.legend()
+        plt.show()
+
+        plt.figure()
+        plt.clf()
+        plt.plot(steps, trajectory[:, 2], label="psi")
+        plt.xlabel("Time")
+        plt.ylabel("State variable: psi")
+        plt.title("State variables at the equilibrium")
+        plt.grid()
+        plt.legend()
+        plt.show()
 
 def plot_equilibria(equilibrium_point):
     # Plot the equilibrium points
     psi_dot, delta, Fx = equilibrium_point
-    xx = np.array([x_des, y_des, psi_des, V_des, beta_des, psi_dot])
+    xx = np.array([0, 0, 0, V_des, beta_des, psi_dot])
     uu = np.array([delta, Fx])
 
     steps = np.linspace(0, 100, 100000)
@@ -102,18 +131,26 @@ def plot_equilibria(equilibrium_point):
     plt.clf()
     plt.plot(steps, trajectory[:, 0], label="x")
     plt.plot(steps, trajectory[:, 1], label="y")
-    trajectory[:, 2] = np.array([x % 360 if x > 360 else x for x in trajectory[:, 2].tolist()])
-    plt.plot(steps, trajectory[:, 2], label="psi")
     plt.plot(steps, trajectory[:, 3], label="V")
     plt.plot(steps, trajectory[:, 4], label="beta")
     plt.plot(steps, trajectory[:, 5], label="psi_dot")
     plt.xlabel("Time")
     plt.ylabel("State variables")
-    plt.ylim([-50, 400])
+    plt.title("State variables behaviour at the equilibrium")
+    plt.ylim([-250, 250])
     plt.grid()
     plt.legend()
     plt.show()
 
+    plt.figure()
+    plt.clf()
+    plt.plot(steps, trajectory[:, 2], label="psi")
+    plt.xlabel("Time")
+    plt.ylabel("State variable: psi")
+    plt.title("State variables behaviour at the equilibrium")
+    plt.grid()
+    plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
     beta_des = 20.0
@@ -121,14 +158,18 @@ if __name__ == "__main__":
     eq1 = find_equilibrium_point(nonlinear_system_discretized, initial_guess=[0, 0, 0], args=(beta_des, V_des))
     print("1st eq point: ", eq1)
     print("Diff: ", np.isclose(nonlinear_system_discretized(eq1, beta_des, V_des), np.zeros(3)))
-    # plot_equilibria(eq1)
+    # Valore non corrispondente di psi_dot nel grafico ottenuto: non va bene!
+    #plot_equilibria(eq1)
+    plot_with_equilibria(eq1)
 
-    beta_des = 0.0
+    beta_des = 10.0
     V_des = 1.0
     eq2 = find_equilibrium_point(nonlinear_system_discretized, initial_guess=[0, 0, 0], args=(beta_des, V_des))
     print("2nd eq point: ", eq2)
     print("Diff: ", np.isclose(nonlinear_system_discretized(eq2, beta_des, V_des), np.zeros(3)))
-    # plot_equilibria(eq2)
+    #plot_equilibria(eq2)
+    plot_with_equilibria(eq2)
+    # Comportamento molto strano (direi sbagliato) delle variabili di stato, x instabile
 
     beta_des = 60.0
     V_des = -5.0
@@ -136,3 +177,38 @@ if __name__ == "__main__":
     print("3rd eq point: ", eq3)
     print("Diff: ", np.isclose(nonlinear_system_discretized(eq3, beta_des, V_des), np.zeros(3)))
     plot_equilibria(eq3)
+    plot_with_equilibria(eq3)
+    # Otteniamo i valori desiderati nei plot di beta_des e V_des, e viene plottato correttamente il valore di psi_dot
+
+    #==================== Plot of the dynamics =====================================
+    # Considering constant inputs
+    '''delta = 45.0
+    Fx = 1.0
+    uu = np.array([delta, Fx])
+    xx = np.array([10, 10, 20, 1.0, 0.0, 1])
+    dyn = np.zeros([100000, 2])
+    # dyn: x0 y0
+    #      x1 y1
+    #      .. ..
+    #      xN yN
+    # -> dyn: (N,2)
+
+    for i in range(100000):
+        xx_plus = dynamics(xx,uu)
+        dyn[i, 0] = xx_plus[0]
+        dyn[i, 1] = xx_plus[1]
+        xx = xx_plus
+
+    plt.figure()
+    plt.clf()
+    plt.plot(dyn[:,0], dyn[:,1])
+    plt.xlabel("State variable: x")
+    plt.ylabel("State variable: y")
+    plt.title("Dynamics")
+    plt.grid()
+    plt.show() '''
+    # Si vedono le circonference che ci diceva Bossio
+
+
+    
+    
