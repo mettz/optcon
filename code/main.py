@@ -1,8 +1,18 @@
 from scipy.optimize import fsolve
+from scipy.optimize import minimize
+import scipy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 from dynamics import dynamics
 from dynamics_continuous import dynamics_continuous
+from autograd import jacobian
+from autograd import hessian
+
+# import cost functions
+import cost as cost
+
+from scipy.linalg import solve_discrete_are
+from scipy.integrate import solve_ivp
 
 # Allow Ctrl-C to work despite plotting
 import signal
@@ -210,5 +220,29 @@ if __name__ == "__main__":
     # Si vedono le circonference che ci diceva Bossio
 
 
-    
-    
+
+'''
+# Newton's method for optimal control
+def newtons_method(x0, max_iter=100, tol=1e-6):
+    x = x0
+    for _ in range(max_iter):
+        # Evaluate the dynamics, cost, and constraints at the current iterate
+        dynamics_x = dynamics(x, None)  # You may need to include the current control input
+        cost_x = cost(None)  # You need to include the current control input
+
+        # Formulate the Lagrangian Hessian matrix
+        lagrangian_hessian = hessian(dynamics_x)  # Replace with the actual Hessian matrix of the Lagrangian
+
+        # Solve the linearized subproblem using the Hessian matrix
+        linearized_subproblem = minimize(cost, x, method='SLSQP', jac=None, hess=lagrangian_hessian, constraints=None)
+
+        # Update the control input
+        u_new = linearized_subproblem.x
+
+        # Check for convergence
+        if np.linalg.norm(u_new - x) < tol:
+            break
+
+        x = u_new
+
+    return x'''
