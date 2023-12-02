@@ -1,13 +1,14 @@
-import numpy as np
+import numpy as np 
 
-# Definition of parameters
-dt = 1e-3  # discretization step
-mass = 1480  # Kg
-Iz = 1950  # Kgm^2
-a = 1.421  # m
-b = 1.029  # m
-mu = 1  # nodim
-g = 9.81  # m/s^2
+PARAMETERS = {
+    "dt": 1e-3, # discretization step
+    "mass": 1480, # Kg
+    "Iz": 1950, # Kgm^2
+    "a": 1.421, # m
+    "b": 1.029, # m
+    "mu": 1, # nodim
+    "g": 9.81, # m/s^2
+}
 
 
 def dynamics(xx, uu):
@@ -29,15 +30,15 @@ def dynamics(xx, uu):
     number_of_inputs = 2
 
     # Definition of the vertical forces on the front and rear wheel
-    Fzf = (mass * g * b) / (a + b)
-    Fzr = (mass * g * a) / (a + b)
+    Fzf = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['b']) / (PARAMETERS['a'] + PARAMETERS['b'])
+    Fzr = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['a']) / (PARAMETERS['a'] + PARAMETERS['b'])
 
     x, y, psi, V, beta, psi_dot = xx
     delta, Fx = uu
 
     # Defintion of lateral forces
-    Fyf = mu * Fzf * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta)))  # mu * Fzf * Bf
-    Fyr = mu * Fzr * (-(V * np.sin(beta) - b * psi_dot) / (V * np.cos(beta)))  # mu * Fzr * Br
+    Fyf = PARAMETERS['mu'] * Fzf * (delta - (V * np.sin(beta) + PARAMETERS['a'] * psi_dot) / (V * np.cos(beta)))  # mu * Fzf * Bf
+    Fyr = PARAMETERS['mu'] * Fzr * (-(V * np.sin(beta) - PARAMETERS['b'] * psi_dot) / (V * np.cos(beta)))  # mu * Fzr * Br
 
     xx_plus = np.zeros((number_of_states,))
 
@@ -54,24 +55,25 @@ def dynamics(xx, uu):
     # u[0] = delta
     # u[1] = Fx
 
-    # Euler discretization (we use it since the equations become simpler)
+    # Euler discretization of the continuous time model
     # x_dot = V * cos(beta) * cos(psi) - V * sin(beta) * sin(psi) # Continuous time
-    x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi)) # Discrete time
+    x_plus = x + PARAMETERS['dt'] * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi)) # Discrete time
 
     # y_dot = V * cos(beta) * sin(psi) + V * sin(beta) * cos(psi) # Continuous time
-    y_plus = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi)) # Discrete time
+    y_plus = y + PARAMETERS['dt'] * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi)) # Discrete time
 
     # psi_dot = psi_dot # Continuous time
-    psi_plus = psi + dt * psi_dot # Discrete time
+    # x2_dot = x5
+    psi_plus = psi + PARAMETERS['dt'] * psi_dot # Discrete time
 
     # mass * V_dot = Fyr * sin(beta) + Fx * cos(beta - delta) + Fyf * sin(beta - delta) # Continuous time
-    V_plus = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta))) # Discrete time
+    V_plus = V + PARAMETERS['dt'] * ((1 / PARAMETERS['mass']) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta))) # Discrete time
 
     # beta_dot = 1 / (mass * V) * (Fy,r * cos(beta) + Fy,f * cos(beta - delta) - Fx * sin(beta - delta)) - psi_dot # Continuous time
-    beta_plus = beta + dt * ((1 / (mass * V) * (Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)) # Discrete time
+    beta_plus = beta + PARAMETERS['dt'] * ((1 / (PARAMETERS['mass'] * V) * (Fyr * np.cos(beta) + Fyf * np.cos(beta - delta) - Fx * np.sin(beta - delta)) - psi_dot)) # Discrete time
 
     # Iz * psi_dot_dot = (Fx * sin(delta) + Fy,f * cos(delta)) * a - Fy,r * b # Continuous time
-    psi_dot_plus = psi_dot + dt * (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b) # Discrete time
+    psi_dot_plus = psi_dot + PARAMETERS['dt'] * (1 / PARAMETERS['Iz']) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * PARAMETERS['a'] - Fyr * PARAMETERS['b']) # Discrete time
 
     # Computation of the gradient of the discretized dynamics equations
     # nabla0 = np.array( # Derivate of x_dot with respect to (x,y,psi,V,beta,psi_dot)
@@ -116,7 +118,7 @@ def dynamics(xx, uu):
     #     ]
     # )
     # nabla5 = np.array( # Derivate of psi_dot_dot with respect to (x,y,psi,V,beta,psi_dot) 
-    #     [ #CONTROLLARE E AGGIUNGERE I DT
+    #     [ #MANCA LA DERIVATA
     #         0,
     #         0,
     #         0,
@@ -160,3 +162,16 @@ def dynamics(xx, uu):
     xx_plus = np.array([x_plus, y_plus, psi_plus, V_plus, beta_plus, psi_dot_plus]).squeeze()
 
     return xx_plus #fx, fu
+
+def trajectory(points, xx, uu):
+    steps = np.linspace(0, points, points * 1000)
+    trajectory_xx = np.zeros((len(steps), len(xx)))
+    trajectory_uu = np.zeros((len(steps), len(uu)))
+
+    for i in range(len(steps)):
+        xx_plus = dynamics(xx, uu)
+        trajectory_xx[i, :] = xx_plus
+        xx = xx_plus
+        trajectory_uu[i, :] = uu
+
+    return steps, trajectory_xx, trajectory_uu
