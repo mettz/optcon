@@ -1,18 +1,20 @@
-'''#
-# Gradient method for Optimal Control
-#
-
 import numpy as np
-
 import dynamics as dyn
+import sympy as sp
 
-number_of_states = dyn.number_of_states
-number_of_inputs = dyn.number_of_inputs
+number_of_states = dyn.number_of_states #6
+number_of_inputs = dyn.number_of_inputs #2
 
-# QQt = np.array([[10000, 0], [0, 100]])
-QQt = 0.1*np.diag([100.0, 1.0])
-RRt = 0.01*np.eye(number_of_inputs)
+# QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
 # RRt = 1*np.eye(ni)
+
+# nostro caso: QQt 6x6, RRt 2x2
+# Sulla diagonale di QQt metto i pesi per gli stati, sulla diagonale di RRt metto i pesi per gli input
+# Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
+# anche perchè l'equilibrio dipende da queste ultime
+ 
+QQt = 0.1*np.diag([1.0, 1.0, 1.0, 100.0, 100.0, 100.0])
+RRt = 0.01*np.eye(number_of_inputs)
 
 QQT = QQt
 
@@ -22,15 +24,19 @@ QQT = QQt
 
 # ref_deg_T = 30
 # KKeq = dyn.KKeq
-# xx_ref_T = np.zeros((ns,))
-# uu_ref_T = np.zeros((ni,))
+xx_ref_T = np.zeros((number_of_states,))
+uu_ref_T = np.zeros((number_of_inputs,))
 
 # xx_ref_T[0] = np.deg2rad(ref_deg_T)
 # uu_ref_T[0] = KKeq*np.sin(xx_ref_T[0])
 
-# fx,fu = dyn.dynamics(xx_ref_T,uu_ref_T)[1:]
+# Decidere se le derivate della dinamica le lasciamo calcolare ad un metodo oppure se dentro a dynamics le vogliamo calcolare a mano
+# Ho visto che esiste il modulo simpy che permette di eseguire le derivate, è sufficiente passargli l'equazione da derivare e la variabile rispetto cui derivare
+fx = sp.diff(dyn.dynamics(xx_ref_T,uu_ref_T)[0:],xx_ref_T)[1:]
+fu = dyn.dynamics(xx_ref_T,uu_ref_T)[1:]
 
-# AA = fx.T; BB = fu.T
+# Compuate the Jacobian of the dynamics
+AA = fx.T; BB = fu.T
 
 # import control as ctrl
 
@@ -96,4 +102,5 @@ def termcost(xx,xx_ref):
 
   lTx = QQT@(xx - xx_ref)
 
-  return llT.squeeze(), lTx'''
+  return llT.squeeze(), lTx
+
