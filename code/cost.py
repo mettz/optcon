@@ -1,9 +1,8 @@
 import numpy as np
 import dynamics as dyn
-import sympy as sp
 
-number_of_states = dyn.number_of_states #6
-number_of_inputs = dyn.number_of_inputs #2
+number_of_states = dyn.number_of_states  # 6
+number_of_inputs = dyn.number_of_inputs  # 2
 
 # QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
 # RRt = 1*np.eye(ni)
@@ -12,42 +11,18 @@ number_of_inputs = dyn.number_of_inputs #2
 # Sulla diagonale di QQt metto i pesi per gli stati, sulla diagonale di RRt metto i pesi per gli input
 # Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
 # anche perchè l'equilibrio dipende da queste ultime
- 
-QQt = 0.1*np.diag([1.0, 1.0, 1.0, 100.0, 100.0, 100.0])
-RRt = 0.01*np.eye(number_of_inputs)
+
+QQt = 0.1 * np.diag([1.0, 1.0, 1.0, 100.0, 100.0, 100.0])
+RRt = 0.01 * np.eye(number_of_inputs)
 
 QQT = QQt
 
-# ######################################
-# # Reference curve
-# ######################################
 
-# ref_deg_T = 30
-# KKeq = dyn.KKeq
-xx_ref_T = np.zeros((number_of_states,))
-uu_ref_T = np.zeros((number_of_inputs,))
+def stagecost(xx, uu, xx_ref, uu_ref):
+    """
+    Stage-cost
 
-# xx_ref_T[0] = np.deg2rad(ref_deg_T)
-# uu_ref_T[0] = KKeq*np.sin(xx_ref_T[0])
-
-# Decidere se le derivate della dinamica le lasciamo calcolare ad un metodo oppure se dentro a dynamics le vogliamo calcolare a mano
-# Ho visto che esiste il modulo simpy che permette di eseguire le derivate, è sufficiente passargli l'equazione da derivare e la variabile rispetto cui derivare
-fx = sp.diff(dyn.dynamics(xx_ref_T,uu_ref_T)[0:],xx_ref_T)[1:]
-fu = dyn.dynamics(xx_ref_T,uu_ref_T)[1:]
-
-# Compuate the Jacobian of the dynamics
-AA = fx.T; BB = fu.T
-
-# import control as ctrl
-
-# QQT = ctrl.dare(AA,BB,QQt,RRt)[0]
-
-
-def stagecost(xx,uu, xx_ref, uu_ref):
-  """
-    Stage-cost 
-
-    Quadratic cost function 
+    Quadratic cost function
     l(x,u) = 1/2 (x - x_ref)^T Q (x - x_ref) + 1/2 (u - u_ref)^T R (u - u_ref)
 
     Args
@@ -58,28 +33,29 @@ def stagecost(xx,uu, xx_ref, uu_ref):
       - uu_ref \in \R^2 input reference at time t
 
 
-    Return 
+    Return
       - cost at xx,uu
       - gradient of l wrt x, at xx,uu
       - gradient of l wrt u, at xx,uu
-  
-  """
 
-  xx = xx[:,None]
-  uu = uu[:,None]
+    """
 
-  xx_ref = xx_ref[:,None]
-  uu_ref = uu_ref[:,None]
+    xx = xx[:, None]
+    uu = uu[:, None]
 
-  ll = 0.5*(xx - xx_ref).T@QQt@(xx - xx_ref) + 0.5*(uu - uu_ref).T@RRt@(uu - uu_ref)
+    xx_ref = xx_ref[:, None]
+    uu_ref = uu_ref[:, None]
 
-  lx = QQt@(xx - xx_ref)
-  lu = RRt@(uu - uu_ref)
+    ll = 0.5 * (xx - xx_ref).T @ QQt @ (xx - xx_ref) + 0.5 * (uu - uu_ref).T @ RRt @ (uu - uu_ref)
 
-  return ll.squeeze(), lx, lu
+    lx = QQt @ (xx - xx_ref)
+    lu = RRt @ (uu - uu_ref)
 
-def termcost(xx,xx_ref):
-  """
+    return ll.squeeze(), lx, lu
+
+
+def termcost(xx, xx_ref):
+    """
     Terminal-cost
 
     Quadratic cost function l_T(x) = 1/2 (x - x_ref)^T Q_T (x - x_ref)
@@ -88,19 +64,18 @@ def termcost(xx,xx_ref):
       - xx \in \R^6 state at time t
       - xx_ref \in \R^6 state reference at time t
 
-    Return 
+    Return
       - cost at xx,uu
       - gradient of l wrt x, at xx,uu
       - gradient of l wrt u, at xx,uu
-  
-  """
 
-  xx = xx[:,None]
-  xx_ref = xx_ref[:,None]
+    """
 
-  llT = 0.5*(xx - xx_ref).T@QQT@(xx - xx_ref)
+    xx = xx[:, None]
+    xx_ref = xx_ref[:, None]
 
-  lTx = QQT@(xx - xx_ref)
+    llT = 0.5 * (xx - xx_ref).T @ QQT @ (xx - xx_ref)
 
-  return llT.squeeze(), lTx
+    lTx = QQT @ (xx - xx_ref)
 
+    return llT.squeeze(), lTx

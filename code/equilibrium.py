@@ -1,26 +1,27 @@
 import numpy as np
 from scipy.optimize import fsolve
 
-from dynamics import PARAMETERS
+from dynamics import *
+
 
 def nonlinear_system_discretized(variables, V_des, beta_des):
     # Define your nonlinear system of equations with inputs
     psi_dot, delta, Fx = variables
 
-    Fzf = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['b']) / (PARAMETERS['a'] + PARAMETERS['b'])
-    Fzr = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['a']) / (PARAMETERS['a'] + PARAMETERS['b'])
+    Fzf = (mass * g * b) / (a + b)
+    Fzr = (mass * g * a) / (a + b)
 
-    Bf = delta - (V_des * np.sin(beta_des) + PARAMETERS['a'] * psi_dot) / (V_des * np.cos(beta_des))
-    Br = -(V_des * np.sin(beta_des) - PARAMETERS['b'] * psi_dot) / (V_des * np.cos(beta_des))
+    Bf = delta - (V_des * np.sin(beta_des) + a * psi_dot) / (V_des * np.cos(beta_des))
+    Br = -(V_des * np.sin(beta_des) - b * psi_dot) / (V_des * np.cos(beta_des))
 
     # Defintion of lateral forces
-    Fyf = PARAMETERS['mu'] * Fzf * Bf
-    Fyr = PARAMETERS['mu'] * Fzr * Br
+    Fyf = mu * Fzf * Bf
+    Fyr = mu * Fzr * Br
 
     # Define the system of equations to find the roots
-    eq1 = PARAMETERS['dt'] * ((1 / PARAMETERS['mass']) * (Fyr * np.sin(beta_des) + Fx * np.cos(beta_des - delta) + Fyf * np.sin(beta_des - delta)))
-    eq2 = PARAMETERS['dt'] * (1 / (PARAMETERS['mass'] * V_des) * (Fyr * np.cos(beta_des) + Fyf * np.cos(beta_des - delta) - Fx * np.sin(beta_des - delta)) - psi_dot)
-    eq3 = PARAMETERS['dt'] * ((1 / PARAMETERS['Iz']) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * PARAMETERS['a'] - Fyr * PARAMETERS['b']))
+    eq1 = dt * ((1 / mass) * (Fyr * np.sin(beta_des) + Fx * np.cos(beta_des - delta) + Fyf * np.sin(beta_des - delta)))
+    eq2 = dt * (1 / (mass * V_des) * (Fyr * np.cos(beta_des) + Fyf * np.cos(beta_des - delta) - Fx * np.sin(beta_des - delta)) - psi_dot)
+    eq3 = dt * ((1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b))
 
     return [eq1, eq2, eq3]
 
@@ -29,19 +30,19 @@ def nonlinear_system_continuous(variables, V_des, beta_des):
     # Define your nonlinear system of equations with inputs
     psi_dot, delta, Fx = variables
 
-    Fzf = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['b']) / (PARAMETERS['a'] + PARAMETERS['b'])
-    Fzr = (PARAMETERS['mass'] * PARAMETERS['g'] * PARAMETERS['a']) / (PARAMETERS['a'] + PARAMETERS['b'])
+    Fzf = (mass * g * b) / (a + b)
+    Fzr = (mass * g * a) / (a + b)
 
-    Bf = delta - (V_des * np.sin(beta_des) + PARAMETERS['a'] * psi_dot) / (V_des * np.cos(beta_des))
-    Br = -(V_des * np.sin(beta_des) - PARAMETERS['b'] * psi_dot) / (V_des * np.cos(beta_des))
+    Bf = delta - (V_des * np.sin(beta_des) + a * psi_dot) / (V_des * np.cos(beta_des))
+    Br = -(V_des * np.sin(beta_des) - b * psi_dot) / (V_des * np.cos(beta_des))
 
     # Defintion of lateral forces
-    Fyf = PARAMETERS['mu'] * Fzf * Bf
-    Fyr = PARAMETERS['mu'] * Fzr * Br
+    Fyf = mu * Fzf * Bf
+    Fyr = mu * Fzr * Br
 
-    eq1 = (1 / PARAMETERS['mass']) * (Fyr * np.sin(beta_des) + Fx * np.cos(beta_des - delta) + Fyf * np.sin(beta_des - delta))
-    eq2 = 1 / (PARAMETERS['mass'] * V_des) * (Fyr * np.cos(beta_des) + Fyf * np.cos(beta_des - delta) - Fx * np.sin(beta_des - delta)) - psi_dot
-    eq3 = (1 / PARAMETERS['Iz']) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * PARAMETERS['a'] - Fyr * PARAMETERS['b'])
+    eq1 = (1 / mass) * (Fyr * np.sin(beta_des) + Fx * np.cos(beta_des - delta) + Fyf * np.sin(beta_des - delta))
+    eq2 = 1 / (mass * V_des) * (Fyr * np.cos(beta_des) + Fyf * np.cos(beta_des - delta) - Fx * np.sin(beta_des - delta)) - psi_dot
+    eq3 = (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)
 
     return [eq1, eq2, eq3]
 
