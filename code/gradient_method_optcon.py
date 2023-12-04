@@ -23,7 +23,7 @@ stepsize_0 = 1
 cc = 0.5
 # beta = 0.5
 beta = 0.7
-armijo_maxiters = 40  # number of Armijo iterations
+armijo_maxiters = 20  # number of Armijo iterations
 
 term_cond = 1e-3
 
@@ -41,13 +41,6 @@ ns = dyn.number_of_states
 ni = dyn.number_of_inputs
 
 TT = int(tf / dt)  # discrete-time samples
-
-
-######################################
-# Reference curve
-######################################
-
-# PRENDERLE DAL MAIN
 
 ######################################
 # Initial guess
@@ -94,10 +87,11 @@ def gradient_method(xx_ref, uu_ref):
         for tt in range(TT - 1):
             temp_cost = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ[kk] += temp_cost
+            # print('JJ[kk]: ', JJ[kk]) # Debug
 
         temp_cost = cst.termcost(xx[:, -1, kk], xx_ref[:, -1])[0]
         JJ[kk] += temp_cost
-
+        
         ##################################
         # Descent direction calculation
         ##################################
@@ -115,6 +109,7 @@ def gradient_method(xx_ref, uu_ref):
             lmbd_temp = At.T @ lmbd[:, tt + 1, kk][:, None] + at  # costate equation
             dJ_temp = Bt.T @ lmbd[:, tt + 1, kk][:, None] + bt  # gradient of J wrt u
             deltau_temp = -dJ_temp
+            print('deltau_temp', deltau_temp) #Debug
 
             lmbd[:, tt, kk] = lmbd_temp.squeeze()
             dJ[:, tt, kk] = dJ_temp.squeeze()
@@ -123,17 +118,16 @@ def gradient_method(xx_ref, uu_ref):
             descent[kk] += deltau[:, tt, kk].T @ deltau[:, tt, kk]
             descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk]
 
-        ##################################
+        """  ##################################
         # Stepsize selection - ARMIJO
         ##################################
 
         stepsizes = []  # list of stepsizes
-        costs_armijo = []
+        costs_armijo = [] 
 
         stepsize = stepsize_0
 
-        # for ii in range(armijo_maxiters):
-        while True:
+        for ii in range(armijo_maxiters):
             # temp solution update
 
             xx_temp = np.zeros((ns, TT))
@@ -154,6 +148,7 @@ def gradient_method(xx_ref, uu_ref):
 
             temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
             JJ_temp += temp_cost
+            print('JJ_temp', JJ_temp) #Debug
 
             stepsizes.append(stepsize)  # save the stepsize
             costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
@@ -161,17 +156,19 @@ def gradient_method(xx_ref, uu_ref):
             if JJ_temp > JJ[kk] + cc * stepsize * descent_arm[kk]:
                 # update the stepsize
                 stepsize = beta * stepsize
-
+                print("Armijo update = {:.3e}".format(stepsize))
             else:
                 print("Armijo stepsize = {:.3e}".format(stepsize))
                 break
 
             if visu_armijo and kk % 10 == 0:
                 plots.armijo_plot(stepsizes, costs_armijo, descent_arm, JJ, kk, cc)
-
+        """
         ############################
         # Update the current solution
         ############################
+        
+        stepsize = 0.01 #Constant stepsize
 
         xx_temp = np.zeros((ns, TT))
         uu_temp = np.zeros((ni, TT))

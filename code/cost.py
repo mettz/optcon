@@ -12,8 +12,8 @@ number_of_inputs = dyn.number_of_inputs  # 2
 # Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
 # anche perchè l'equilibrio dipende da queste ultime
 
-QQt = 0.1 * np.diag([1.0, 1.0, 1.0, 100.0, 100.0, 100.0])
-RRt = 0.01 * np.eye(number_of_inputs)
+QQt = 0.00001 * np.diag([1.0, 1.0, 1.0])
+RRt = 0.0000001 * np.eye(number_of_inputs)
 
 QQT = QQt
 
@@ -40,7 +40,7 @@ def stagecost(xx, uu, xx_ref, uu_ref):
 
     """
 
-    xx = xx[:, None]
+    xx = xx[:, None] 
     uu = uu[:, None]
 
     xx_ref = xx_ref[:, None]

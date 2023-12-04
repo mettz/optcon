@@ -21,28 +21,30 @@ if __name__ == "__main__":
     initial_eq = find_equilibrium_point(nonlinear_system_discretized, initial_guess=[0, 0, 0], args=(V_des_1, beta_des_1))
     # equilibrium point = [x,y,psi,V,beta,psi_dot]
     # equilibrium input = [delta, Fx]
-    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([0, 0, 0, V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
+    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
     last_index = len(trajectory_xx) - 1
     print(f"Last index: {last_index}")
     print(f"Last state: {trajectory_xx[last_index]}")
-    initial_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_1, beta_des_1, initial_eq[0]])
+    # initial_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_1, beta_des_1, initial_eq[0]])
+    initial_eq_state = np.array([V_des_1, beta_des_1, initial_eq[0]])
     initial_eq_input = np.array([initial_eq[1], initial_eq[2]])
     print(f"Initial eq point: {initial_eq}")
 
     beta_des_2 = 2.0
     V_des_2 = 15.0
     final_eq = find_equilibrium_point(nonlinear_system_discretized, initial_guess=[0, 0, 0], args=(V_des_2, beta_des_2))
-    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([0, 0, 0, V_des_2, beta_des_2, final_eq[0]]), np.array([final_eq[1], final_eq[2]]))
+    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([V_des_2, beta_des_2, final_eq[0]]), np.array([final_eq[1], final_eq[2]]))
     print(f"Last index: {last_index}")
     print(f"Last state: {trajectory_xx[last_index]}")
-    final_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_2, beta_des_2, final_eq[0]])
+    # final_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_2, beta_des_2, final_eq[0]])
+    final_eq_state = np.array([V_des_2, beta_des_2, final_eq[0]])
     final_eq_input = np.array([final_eq[1], final_eq[2]])
 
-    print(f"Final eq poin:  {final_eq}")
+    print(f"Final eq point:  {final_eq}")
 
     # Building transition between equilibria
     time = 10000
-    reference_curve_states = np.zeros((6, time))
+    reference_curve_states = np.zeros((3, time))
     reference_curve_inputs = np.zeros((2, time))
     for i in range(time):
         if i < time / 2:
@@ -58,24 +60,26 @@ if __name__ == "__main__":
     plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
 
     states = ["x", "y", "psi", "V", "beta", "psi_dot"]
-    plt.figure()
+    """plt.figure(figsize = (10, 10))
     plt.clf()
     plt.title("Reference curve for states")
-    for i in range(np.size(reference_curve_states, 1)):
+    for i in range(np.size(states)):
+        plt.subplot(3,2,1+i)
         plt.plot(reference_curve_states[i, :], label=f"Reference curve {states[i]}")
-        plt.legend()
         plt.grid()
-        # plt.show()
+        plt.legend()
+    plt.show() """
 
     inputs = ["delta", "Fx"]
-    plt.figure()
+    """plt.figure(figsize = (10, 10))
     plt.clf()
-    plt.title("Reference curve for inputs")
-    for i in range(np.size(reference_curve_inputs, 1)):
+    #plt.title("Reference curve for inputs")
+    for i in range(np.size(inputs)):
+        plt.subplot(2,1,1+i)
         plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
-        plt.legend()
         plt.grid()
-        # plt.show()
+        plt.legend()
+    plt.show() """
 
 
 """

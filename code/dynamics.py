@@ -11,7 +11,8 @@ b = 1.029  # m
 mu = 1  # nodim
 g = 9.81  # m/s^2
 
-number_of_states = 6
+# number_of_states = 6
+number_of_states = 3
 number_of_inputs = 2
 
 
@@ -34,7 +35,8 @@ def dynamics(xx, uu):
     Fzf = (mass * g * b) / (a + b)
     Fzr = (mass * g * a) / (a + b)
 
-    x, y, psi, V, beta, psi_dot = xx
+    # x, y, psi, V, beta, psi_dot = xx
+    V, beta, psi_dot = xx
     delta, Fx = uu
 
     # Defintion of lateral forces
@@ -48,11 +50,11 @@ def dynamics(xx, uu):
     # uu = (delta, Fx)
 
     # Euler discretization of the continuous time model
-    x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
+    # x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
 
-    y_plus = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi))
+    # y_plus = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi))
 
-    psi_plus = psi + dt * psi_dot
+    # psi_plus = psi + dt * psi_dot
 
     V_plus = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta)))
 
@@ -60,37 +62,38 @@ def dynamics(xx, uu):
 
     psi_dot_plus = psi_dot + dt * (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)
 
-    xx_plus = np.array([x_plus, y_plus, psi_plus, V_plus, beta_plus, psi_dot_plus]).squeeze()
+    # xx_plus = np.array([x_plus, y_plus, psi_plus, V_plus, beta_plus, psi_dot_plus]).squeeze()
+    xx_plus = np.array([V_plus, beta_plus, psi_dot_plus]).squeeze()
 
-    nabla_x = np.array(
-        [
-            1,
-            0,
-            dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
-            dt * (-np.sin(beta) * np.sin(psi) + np.cos(beta) * np.cos(psi)),
-            dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
-            0,
-        ]
-    )
+    # nabla_x = np.array(
+    #     [
+    #         1,
+    #         0,
+    #         dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
+    #         dt * (-np.sin(beta) * np.sin(psi) + np.cos(beta) * np.cos(psi)),
+    #         dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
+    #         0,
+    #     ]
+    # )
 
-    nabla_y = np.array(
-        [
-            0,
-            1,
-            dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
-            dt * (np.sin(beta) * np.cos(psi) + np.sin(psi) * np.cos(beta)),
-            dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
-            0,
-        ]
-    )
+    # nabla_y = np.array(
+    #     [
+    #         0,
+    #         1,
+    #         dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
+    #         dt * (np.sin(beta) * np.cos(psi) + np.sin(psi) * np.cos(beta)),
+    #         dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
+    #         0,
+    #     ]
+    # )
 
-    nabla_psi = np.array([0, 0, 1, 0, 0, dt])
+    # nabla_psi = np.array([0, 0, 1, 0, 0, dt])
 
     nabla_V = np.array(
         [
-            0,
-            0,
-            0,
+            # 0,
+            # 0,
+            # 0,
             (
                 dt
                 * (
@@ -119,9 +122,9 @@ def dynamics(xx, uu):
 
     nabla_beta = np.array(
         [
-            0,
-            0,
-            0,
+            # 0,
+            # 0,
+            # 0,
             dt
             * (
                 (
@@ -152,9 +155,9 @@ def dynamics(xx, uu):
 
     nabla_psi_dot = np.array(
         [
-            0,
-            0,
-            0,
+            # 0,
+            # 0,
+            # 0,
             (
                 dt
                 * (
@@ -177,13 +180,14 @@ def dynamics(xx, uu):
         ]
     )
 
-    fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
+    # fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
+    fx = np.array([nabla_V, nabla_beta, nabla_psi_dot])
 
     nabla_delta = np.array(
         [
-            0,
-            0,
-            0,
+            # 0,
+            # 0,
+            # 0,
             dt
             * (
                 Fx * np.sin(beta - delta)
@@ -209,7 +213,11 @@ def dynamics(xx, uu):
         ]
     )
 
-    nabla_Fx = np.array([0, 0, 0, dt * np.cos(beta - delta) / mass, -dt * np.sin(beta - delta) / (V * mass), a * dt * np.sin(delta) / Iz])
+    nabla_Fx = np.array([
+        # 0, 
+        # 0, 
+        # 0,
+        dt * np.cos(beta - delta) / mass, -dt * np.sin(beta - delta) / (V * mass), a * dt * np.sin(delta) / Iz])
 
     fu = np.array([nabla_delta, nabla_Fx])
 
