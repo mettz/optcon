@@ -56,7 +56,7 @@ if __name__ == "__main__":
     print(f"Reference curve states: {reference_curve_states} with shape {reference_curve_states.shape}")
     xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
 
-    #gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
+    #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
     plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
 
     #states = ["x", "y", "psi", "V", "beta", "psi_dot"]
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         plt.plot(reference_curve_states[i, :], label=f"Reference curve {states[i]}")
         plt.grid()
         plt.legend()
-    plt.show()
+    #plt.show()
 
     inputs = ["delta", "Fx"]
     plt.figure(figsize = (10, 10))
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
         plt.grid()
         plt.legend()
-    plt.show()
+    #plt.show()
 
 
 """

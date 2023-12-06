@@ -89,11 +89,12 @@ def plot_equilibria(equilibrium_point, V_des, beta_des):
     plt.show()
 
 
-# ==================== Plot of the dynamics =====================================
+########################  Plot of the dynamics  #############################
 def dynamics_plot(delta, Fx):
     # Considering constant inputs
     delta = 45.0
     Fx = 1.0
+
     uu = np.array([delta, Fx])
     xx = np.array([0, 1.0, 0, 5.0, 1.0, 1])
     dyn = np.zeros([100000, 2])
@@ -122,7 +123,7 @@ def dynamics_plot(delta, Fx):
 ############################
 # Gradient method plots
 ############################
-def armijo_plot(steps, stepsize_0, stepsizes, costs, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
+def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
     ############################
     # Armijo plot
     ############################

@@ -13,7 +13,8 @@ plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
-max_iters = int(3e2)
+#max_iters = int(3e2)
+max_iters = 10
 stepsize_0 = 0.001
 
 # Armijo parametrs
@@ -23,7 +24,7 @@ armijo_maxiters = 20
 
 term_cond = 1e-3
 
-visu_armijo = False
+visu_armijo = True
 
 # Trajectory parameters
 tf = 10  # final time in seconds
@@ -68,11 +69,10 @@ def gradient_method(xx_ref, uu_ref):
 
     #xx[:, :, 0] = xx_init 
     #print("xx_ref[:,0]", xx_ref[:,0])
-    xx_init = xx_ref[:,0, None] * np.zeros((1, TT))
-    xx[:, :, 0] = xx_init
+    xx[:, :, 0] = xx_ref[:,0,None]
     #uu[:, :, 0] = uu_init
-    uu_init = uu_ref[:,0, None] * np.zeros((1, TT))
-    uu[:, :, 0] = uu_init
+    #uu_init = uu_ref[:,0, None]
+    uu[:, :, 0] = uu_ref[:,0, None]
 
     x0 = xx_ref[:, 0]
 
@@ -82,13 +82,9 @@ def gradient_method(xx_ref, uu_ref):
         for tt in range(TT - 1): #da 0 a 9999
             temp_cost = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ[kk] += temp_cost
-            print('JJ[kk]: ', JJ[kk]) # Debug
 
         temp_cost = cst.termcost(xx[:, -1, kk], xx_ref[:, -1])[0]
-        print('temp_cost: ', temp_cost) # Debug
         JJ[kk] += temp_cost
-
-        print('JJ[kk]: ', JJ[kk]) # Debug
         
         # Descent direction calculation
 
@@ -101,18 +97,17 @@ def gradient_method(xx_ref, uu_ref):
 
             At = fx.T
             Bt = fu.T
-
+            
             lmbd_temp = At.T @ lmbd[:, tt + 1, kk][:, None] + at  # costate equation
             dJ_temp = Bt.T @ lmbd[:, tt + 1, kk][:, None] + bt  # gradient of J wrt u
             deltau_temp = -dJ_temp
-            print('deltau_temp', deltau_temp) #Debug
 
             lmbd[:, tt, kk] = lmbd_temp.squeeze()
             dJ[:, tt, kk] = dJ_temp.squeeze()
             deltau[:, tt, kk] = deltau_temp.squeeze()
 
             descent[kk] += deltau[:, tt, kk].T @ deltau[:, tt, kk]
-            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk]
+            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #
 
         ##################################
         # Stepsize selection - ARMIJO
@@ -144,7 +139,6 @@ def gradient_method(xx_ref, uu_ref):
 
             temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
             JJ_temp += temp_cost
-            print('JJ_temp', JJ_temp) #Debug
 
             stepsizes.append(stepsize)  # save the stepsize
             costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
@@ -152,19 +146,18 @@ def gradient_method(xx_ref, uu_ref):
             if JJ_temp > JJ[kk] + cc * stepsize * descent_arm[kk]:
                 # update the stepsize
                 stepsize = beta * stepsize
-                print("Armijo update = {:.3e}".format(stepsize))
             else:
-                print("Armijo stepsize = {:.3e}".format(stepsize))
-                break
+                if visu_armijo and kk % 10 == 0:
+                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+                    print("Armijo stepsize = {:.3e}".format(stepsize))
+                    break
 
-            if visu_armijo and kk % 10 == 0:
-                plots.armijo_plot(stepsizes, costs_armijo, descent_arm, JJ, kk, cc)
        
         ############################
         # Update the current solution
         ############################
         
-        stepsize = 0.01 #Constant stepsize
+        # stepsize = 0.01 #Constant stepsize
 
         xx_temp = np.zeros((ns, TT))
         uu_temp = np.zeros((ni, TT))

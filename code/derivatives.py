@@ -1,9 +1,9 @@
 from sympy import symbols, sin, cos, diff
 
-x, y, psi, V, beta, psi_dot, delta, Fx, dt, mu, Fzf, F, Fyf, Fyr, mass, Iz, a, b, g = symbols("x y psi V beta psi_dot delta Fx dt mu Fzf Fzr Fyf Fyr mass Iz a b g")
+x, y, psi, V, beta, psi_dot, delta, Fx, dt, mu, Fzf, Fzr, Fyf, Fyr, mass, Iz, a, b, g = symbols("x y psi V beta psi_dot delta Fx dt mu Fzf Fzr Fyf Fyr mass Iz a b g")
 
-Fzf = (mass * g * b) / (a + b)
-Fzr = (mass * g * a) / (a + b)
+# Fzf = (mass * g * b) / (a + b)
+# Fzr = (mass * g * a) / (a + b)
 
 Fyf = mu * Fzf * (delta - (V * sin(beta) + a * psi_dot) / (V * cos(beta)))  # mu * Fzf * Bf
 Fyr = mu * Fzr * (-(V * sin(beta) - b * psi_dot) / (V * cos(beta)))  # mu * Fzr * Br
