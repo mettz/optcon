@@ -39,7 +39,6 @@ if __name__ == "__main__":
     # final_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_2, beta_des_2, final_eq[0]])
     final_eq_state = np.array([V_des_2, beta_des_2, final_eq[0]])
     final_eq_input = np.array([final_eq[1], final_eq[2]])
-
     print(f"Final eq point:  {final_eq}")
 
     # Building transition between equilibria
@@ -54,32 +53,34 @@ if __name__ == "__main__":
             reference_curve_states[:, i] = final_eq_state
             reference_curve_inputs[:, i] = final_eq_input
 
+    print(f"Reference curve states: {reference_curve_states} with shape {reference_curve_states.shape}")
     xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
 
-    # gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
+    #gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
     plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
 
-    states = ["x", "y", "psi", "V", "beta", "psi_dot"]
-    """plt.figure(figsize = (10, 10))
+    #states = ["x", "y", "psi", "V", "beta", "psi_dot"]
+    states = ["V", "beta", "psi_dot"]
+    plt.figure(figsize = (10, 10))
     plt.clf()
     plt.title("Reference curve for states")
     for i in range(np.size(states)):
-        plt.subplot(3,2,1+i)
+        plt.subplot(3,1,1+i)
         plt.plot(reference_curve_states[i, :], label=f"Reference curve {states[i]}")
         plt.grid()
         plt.legend()
-    plt.show() """
+    plt.show()
 
     inputs = ["delta", "Fx"]
-    """plt.figure(figsize = (10, 10))
+    plt.figure(figsize = (10, 10))
     plt.clf()
-    #plt.title("Reference curve for inputs")
+    plt.title("Reference curve for inputs")
     for i in range(np.size(inputs)):
         plt.subplot(2,1,1+i)
         plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
         plt.grid()
         plt.legend()
-    plt.show() """
+    plt.show()
 
 
 """

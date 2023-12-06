@@ -12,28 +12,20 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
-#######################################
 # Algorithm parameters
-#######################################
-
 max_iters = int(3e2)
-stepsize_0 = 1
+stepsize_0 = 0.001
 
-# ARMIJO PARAMETERS
+# Armijo parametrs
 cc = 0.5
-# beta = 0.5
 beta = 0.7
-armijo_maxiters = 20  # number of Armijo iterations
+armijo_maxiters = 20 
 
 term_cond = 1e-3
 
 visu_armijo = False
 
-
-#######################################
 # Trajectory parameters
-#######################################
-
 tf = 10  # final time in seconds
 
 dt = dyn.dt  # get discretization step from dynamics
@@ -41,14 +33,16 @@ ns = dyn.number_of_states
 ni = dyn.number_of_inputs
 
 TT = int(tf / dt)  # discrete-time samples
+print("TT", TT)
 
-######################################
 # Initial guess
-######################################
+xx_init = np.ones((ns, TT)) # 3x10000
+# xx_init contiene tutta la guess trajectory
 
-xx_init = np.ones((ns, TT))
-uu_init = np.ones((ni, TT))
+print("xx_init", xx_init)
+uu_init = np.ones((ni, TT)) # 2x10000
 
+#xx_init[:,0] = np.array()
 ######################################
 # Arrays to store data
 ######################################
@@ -67,34 +61,36 @@ descent_arm = np.zeros(max_iters)  # collect descent direction
 
 
 def gradient_method(xx_ref, uu_ref):
-    ######################################
-    # Main
-    ######################################
-
-    print("-*-*-*-*-*-")
+    print("Starting the computation of the optimal trajectory...")
 
     kk = 0
-    iters = max_iters
+    iters = max_iters # 300
 
+    #xx[:, :, 0] = xx_init 
+    #print("xx_ref[:,0]", xx_ref[:,0])
+    xx_init = xx_ref[:,0, None] * np.zeros((1, TT))
     xx[:, :, 0] = xx_init
+    #uu[:, :, 0] = uu_init
+    uu_init = uu_ref[:,0, None] * np.zeros((1, TT))
     uu[:, :, 0] = uu_init
 
     x0 = xx_ref[:, 0]
 
-    for kk in range(iters - 1):
+    for kk in range(iters - 1): #da 0 a 299
         JJ[kk] = 0
         # calculate cost
-        for tt in range(TT - 1):
+        for tt in range(TT - 1): #da 0 a 9999
             temp_cost = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ[kk] += temp_cost
-            # print('JJ[kk]: ', JJ[kk]) # Debug
+            print('JJ[kk]: ', JJ[kk]) # Debug
 
         temp_cost = cst.termcost(xx[:, -1, kk], xx_ref[:, -1])[0]
+        print('temp_cost: ', temp_cost) # Debug
         JJ[kk] += temp_cost
+
+        print('JJ[kk]: ', JJ[kk]) # Debug
         
-        ##################################
         # Descent direction calculation
-        ##################################
 
         lmbd_temp = cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[1]
         lmbd[:, TT - 1, kk] = lmbd_temp.squeeze()
@@ -118,7 +114,7 @@ def gradient_method(xx_ref, uu_ref):
             descent[kk] += deltau[:, tt, kk].T @ deltau[:, tt, kk]
             descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk]
 
-        """  ##################################
+        ##################################
         # Stepsize selection - ARMIJO
         ##################################
 
@@ -163,7 +159,7 @@ def gradient_method(xx_ref, uu_ref):
 
             if visu_armijo and kk % 10 == 0:
                 plots.armijo_plot(stepsizes, costs_armijo, descent_arm, JJ, kk, cc)
-        """
+       
         ############################
         # Update the current solution
         ############################
