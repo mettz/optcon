@@ -5,6 +5,7 @@ import plots
 
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
 from gradient_method_optcon import gradient_method, max_iters, descent, JJ, TT, tf, ni, ns
+from newton_method_optcon import newton_method_optcon
 
 # import cost functions
 import cost as cost
@@ -54,7 +55,13 @@ if __name__ == "__main__":
             reference_curve_inputs[:, i] = final_eq_input
 
     print(f"Reference curve states: {reference_curve_states} with shape {reference_curve_states.shape}")
-    xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
+    
+    ####GRADIENT METHOD####
+    #xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
+    
+    ####NEWTON METHOD####
+    xx_star, uu_star = newton_method_optcon(reference_curve_states, reference_curve_inputs)
+
 
     #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
     plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)

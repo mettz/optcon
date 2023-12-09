@@ -1,7 +1,7 @@
 import numpy as np
 import dynamics as dyn
 
-number_of_states = dyn.number_of_states  # 6
+number_of_states = dyn.number_of_states  # 3
 number_of_inputs = dyn.number_of_inputs  # 2
 
 # QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
@@ -79,3 +79,24 @@ def termcost(xx, xx_ref):
     lTx = QQT @ (xx - xx_ref)
 
     return llT.squeeze(), lTx
+
+def hessian_cost():
+    """
+    Hessian of the stage-cost
+
+    Args
+      - xx \in \R^3 state at time t
+      - uu \in \R^2 input at time t
+
+    Return
+      - hessian of l wrt x, at xx,uu
+      - hessian of l wrt u, at xx,uu
+
+    """
+
+    lxx = QQt
+    luu = RRt
+
+    lxu = np.zeros((number_of_states, number_of_inputs))
+
+    return lxx, luu, lxu
