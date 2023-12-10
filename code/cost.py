@@ -97,6 +97,6 @@ def hessian_cost():
     lxx = QQt
     luu = RRt
 
-    lxu = np.zeros((number_of_states, number_of_inputs))
+    lxu = np.zeros((number_of_inputs, number_of_states))
 
     return lxx, luu, lxu

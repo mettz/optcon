@@ -1,11 +1,12 @@
 import numpy as np
 import dynamics as dyn
 import cost as cst
+import time
 
 def newton_method_optcon (xx_ref, uu_ref):
     #Step 0 (Initialization): consider an initla guess for the trajectory, so at iteration 0.
                             #It must contain all the trajectory (so until TT, time in main 10000), k  times (number of iterations)
-
+    print("Newton method starting...")
     tf = 10  # final time in seconds
     dt = dyn.dt  # get discretization step from dynamics
     ns = dyn.number_of_states
@@ -23,13 +24,13 @@ def newton_method_optcon (xx_ref, uu_ref):
 
     at=np.zeros((ns,TT,max_iters))
     bt=np.zeros((ni,TT,max_iters))
-    fx=np.zeros((ns,TT,max_iters))
-    fu=np.zeros((ni,TT,max_iters))
-    lT=np.zeros((TT,max_iters)) 
+    fx=np.zeros((ns, ns,TT,max_iters))
+    fu=np.zeros((ni, ns, TT,max_iters))
+    lT=np.zeros((max_iters)) 
     
     fxx=np.zeros((ns, ns, TT, max_iters))
     fuu=np.zeros((ni, ni, TT, max_iters))
-    fxu=np.zeros((ns, ni, TT, max_iters))
+    fxu=np.zeros((ni, ns, TT, max_iters))
     
     lmbd = np.zeros((ns, TT, max_iters))  # lambdas - costate seq.
 
@@ -49,82 +50,113 @@ def newton_method_optcon (xx_ref, uu_ref):
 
     delta_u = np.zeros((ni, TT, max_iters))
     delta_x = np.zeros((ns, TT, max_iters))
+    print("Initialization done")
 
-    for kk in range(max_iters):
+    for kk in range(max_iters-1):
+        print(f"Iteration {kk}")
+        if kk==0:
+           #Initialization of the trajectory at the equilibrium point
+            xx[:, :, kk] = xx_ref-0.1
+            uu[:, :, kk] = uu_ref-0.1
+        
         #Evaluate nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians
         for tt in range(TT): #da 0 a 9999
             if tt == TT:
-                lT[tt,kk]=cst.termcost(xx[:, tt, kk],xx_ref[:, tt, kk])[1] #VETTORE, per la costate equation
+                lT[kk]=cst.termcost(xx[:, tt, kk],xx_ref[:, tt, kk])[1] #VETTORE, per la costate equation
             else:
-                at[:,tt,kk], bt[:,tt,kk] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1:]
-                fx[:,tt,kk], fu[:,tt,kk] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1:]
+                #at[:,tt,kk], bt[:,tt,kk] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1:].squeeze() 
+                at[:,tt,kk]=cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1].squeeze()
+                bt[:,tt,kk]=cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2].squeeze()
+                
+
+                #fx[:,tt,kk], fu[:,tt,kk] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1:]
+                fx[:,:,tt,kk]=dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1].squeeze()
+                fu[:,:,tt,kk]=dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2].squeeze()
 
                 fxx[:,:,tt,kk], fuu[:,:,tt,kk], fxu[:,:,tt,kk] = cst.hessian_cost()
-            
+
+        print("Evaluation of nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians done\n")
+        
+
         #Solve backward the costate equation 
-        lmbd[:, TT, kk]=lT[:,kk] #Inizializzazione
+
+        lmbd[:, TT-1, kk]=lT[kk] #Inizializzazione
         for tt in reversed(range(TT - 1)):  # integration backward in time
 
-            At[tt,kk] = fx[tt,kk].T
-            Bt[tt,kk] = fu[tt,kk].T
+            At[:,:,tt,kk] = fx[:,:,tt,kk].T
+            Bt[:,:,tt,kk] = fu[:,:,tt,kk].T
 
-            lmbd[:, tt, kk] = lmbd[:, tt + 1, kk] @ At + at[tt,kk]
+            lmbd[:, tt, kk] = lmbd[:, tt + 1, kk] @ At[:,:,tt,kk] + at[:,tt,kk]
+        print("Costate equation solved\n")
 
         #Compute for all t in TT-1, Qt,k ; Rt,k ; St,k, qt,k, rt,k ====> USE REGULARIZATION (slide 13)
+        print("Computing Qt,k ; Rt,k ; St,k, qt,k, rt,k...")
+        
         for tt in range(TT):
           if tt==TT:
             Qt[:,:,tt,kk] = fxx[:,:,tt,kk]
             qqt[:,tt,kk] = at[:,tt,kk]
           else:
-            Qt[:,:,tt,kk] = fxx[tt,kk]
-            Rt[:,:,tt,kk] = fuu[tt,kk]
-            St[:,:,tt,kk] = fxu[tt,kk]
+            Qt[:,:,tt,kk] = fxx[:,:,tt,kk]
+            Rt[:,:,tt,kk] = fuu[:,:,tt,kk]
+            St[:,:,tt,kk] = fxu[:,:,tt,kk]
             qqt[:,tt,kk] = at[:,tt,kk]
             rrt[:,tt,kk] = bt[:,tt,kk]
-             
+        print("Qt,k ; Rt,k ; St,k, qt,k, rt,k computed\n")
 
         #Now compute the descent direction, solving the minimization problem to get delta_x and delta_u.
         #It's an affine LQ problem.
-        
+        print("Computing the descent direction...")
         PP[:,:,-1, kk] = Qt[:,:,TT-1, kk]
         pp[:,-1,kk] = qqt[:,TT-1,kk]
-
+        print("Computing P and p solving the Riccati equation...")
         for tt in reversed(range(TT-1)):
-          MMt_inv[:,:,tt,kk] = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt-1,kk] @ Bt[:,:,tt,kk])
-          mmt[:,tt,kk] = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pptp
+
+          MMt_inv[:,:,tt,kk] = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ Bt[:,:,tt,kk])
+          mmt[:,tt,kk] = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pp[:,tt+1,kk]
           
-          PP[:,:,tt,kk] = At[:,:,tt,kk].T @ PP[:,:,tt-1,kk] @ At[:,:,tt,kk] - (Bt[:,:,tt,kk].T@PP[:,:,tt-1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]).T @ MMt_inv[:,:,tt,kk] @ (Bt[:,:,tt,kk].T@PP[:,:,tt-1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]) + Qt[:,:,tt,kk]
-          pp[:,tt,kk] = At[:,:,tt,kk].T @ pp[:,tt-1,kk] - (Bt[:,:,tt,kk].T@PP[:,:,tt-1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]).T @ MMt_inv[:,:,tt,kk] @ mmt[:,tt,kk] + qqt[:,tt,kk]
-
+          PP[:,:,tt,kk] = At[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ At[:,:,tt,kk] - (Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]).T @ MMt_inv[:,:,tt,kk] @ (Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]) + Qt[:,:,tt,kk]
+          pp[:,tt,kk] = At[:,:,tt,kk].T @ pp[:,tt+1,kk] - (Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk]).T @ MMt_inv[:,:,tt,kk] @ mmt[:,tt,kk] + qqt[:,tt,kk]
+        print("P and p computed\n")
  
-
+        print("Computing KK and sigma_t...")
         # Evaluate KK
-          for tt in range(TT-1):
-
-            PPtp = PP[:,:,tt+1]
-            pptp = pp[:,tt+1][:,None]
+        for tt in range(TT-1):
 
             # Check positive definiteness
 
-            MMt_inv = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ Bt[:,:,tt,kk])
-            mmt = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pp[:,tt+1,kk]
-
+            """ MMt_inv = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ Bt[:,:,tt,kk])
+            mmt = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pp[:,tt+1,kk]"""
             # for other purposes we could add a regularization step here...
 
-            KK[:,:,tt] = -MMt_inv@(Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk])
-            sigma_t[:,tt,kk] = -MMt_inv@mmt
+            KK[:,:,tt,kk] = -MMt_inv[:,:,tt,kk]@(Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk])
+            sigma_t[:,tt,kk] = -MMt_inv[:,:,tt,kk]@mmt[:,tt,kk]
+        print("KK and sigma_t computed \n")
 
+        print("Computing delta_u and delta_x...")
+        # Evaluate delta_u
+        for tt in range(TT - 1):
+            delta_u[:, tt,kk] = KK[:,:,tt,kk]@xx[:, tt,kk] + sigma_t[:,tt,kk]
+            delta_x[:,tt+1,kk] = At[:,:,tt,kk]@xx[:,tt,kk] + Bt[:,:,tt,kk]@uu[:, tt, kk]
+        print("delta_u and delta_x computed \n")
 
-          # Evaluate delta_u
-          for tt in range(TT - 1):
-            delta_u[:, tt] = KK[:,:,tt]@xx[:, tt] + sigma_t[:,tt,kk]
-            delta_x[:,tt+1] = At[:,:,tt,kk]@xx[:,tt] + Bt[:,:,tt,kk]@uu[:, tt, kk]
+        #STEP 2: compute the input sequence
+        print("Computing the input sequence...")
+        
+        stepsize=0.5
+        for tt in range(TT-1):
+            uu[:,tt,kk+1] = uu[:,tt,kk] + stepsize*delta_u[:,tt,kk]
+        print("Input sequence computed \n")
 
-          #STEP 2: compute the input sequence
-          stepsize=0.5
-          for tt in range(TT-1):
-            uu[:,tt,kk+1] = uu[:,tt,kk] + stepsize*delta_u[:,tt]
-
-          #STEP 3: compute the state sequence
-          for tt in range(TT-1):
+        #STEP 3: compute the state sequence
+        print("Computing the state sequence...")
+        
+        for tt in range(TT-1):
             xx[:,tt+1,kk+1] = dyn.dynamics(xx[:,tt,kk],uu[:,tt,kk])[0]
+        print("State sequence computed \n")
+
+    xx_star = xx[:, :, max_iters - 1]
+    uu_star = uu[:, :, max_iters - 1]
+    uu_star[:, -1] = uu_star[:, -2]  # for plotting purposes       
+
+    return xx_star, uu_star 
