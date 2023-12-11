@@ -6,6 +6,7 @@ import plots
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
 from gradient_method_optcon import gradient_method, max_iters, descent, JJ, TT, tf, ni, ns
 from newton_method_optcon import newton_method_optcon
+from using_cvxpy import newton_method_optcon_cvxpy
 
 # import cost functions
 import cost as cost
@@ -62,7 +63,7 @@ if __name__ == "__main__":
     #xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
     
     ####NEWTON METHOD####
-    xx_star, uu_star = newton_method_optcon(reference_curve_states, reference_curve_inputs)
+    xx_star, uu_star = newton_method_optcon_cvxpy(reference_curve_states, reference_curve_inputs)
 
 
     #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
