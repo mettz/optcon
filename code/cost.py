@@ -40,7 +40,7 @@ def stagecost(xx, uu, xx_ref, uu_ref):
 
     """
 
-    xx = xx[:, None] 
+    xx = xx[:, None]
     uu = uu[:, None]
 
     xx_ref = xx_ref[:, None]
@@ -80,6 +80,7 @@ def termcost(xx, xx_ref):
 
     return llT.squeeze(), lTx
 
+
 def hessian_cost():
     """
     Hessian of the stage-cost
@@ -100,3 +101,20 @@ def hessian_cost():
     lxu = np.zeros((number_of_inputs, number_of_states))
 
     return lxx, luu, lxu
+
+
+def hessian_term_cost():
+    """
+    Hessian of the terminal-cost
+
+    Args
+      - xx \in \R^3 state at time t
+
+    Return
+      - hessian of l_T wrt x, at xx
+
+    """
+
+    lxxT = QQT
+
+    return lxxT

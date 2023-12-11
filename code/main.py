@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import dynamics
 
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
-import newton_method_optcon as nmo
+import using_cvxpy as nmo
 
 # import cost functions
 import cost as cost
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # initial_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_1, beta_des_1, initial_eq[0]])
     initial_eq_state = np.array([V_des_1, beta_des_1, initial_eq[0]])
     initial_eq_input = np.array([initial_eq[1], initial_eq[2]])
-    print(f"Initial eq point: {initial_eq}") 
+    print(f"Initial eq point: {initial_eq}")
 
     beta_des_2 = 2.0
     V_des_2 = 15.0
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # final_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_2, beta_des_2, final_eq[0]])
     final_eq_state = np.array([V_des_2, beta_des_2, final_eq[0]])
     final_eq_input = np.array([final_eq[1], final_eq[2]])
-    print(f"Final eq point:  {final_eq}") 
+    print(f"Final eq point:  {final_eq}")
 
     xx_ref = np.zeros((nmo.ns, nmo.TT))
     uu_ref = np.zeros((nmo.ni, nmo.TT))
@@ -62,7 +62,6 @@ if __name__ == "__main__":
     axs[0].grid()
     axs[0].set_ylabel("$x_1 = V$")
     axs[0].set_xlabel("time")
-
 
     axs[1].plot(tt_hor, xx_star[1, :], linewidth=2)
     axs[1].plot(tt_hor, xx_ref[1, :], "g--", linewidth=2)
@@ -90,7 +89,6 @@ if __name__ == "__main__":
 
     plt.show()
 
-
     # #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
     # plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
 
@@ -115,4 +113,4 @@ if __name__ == "__main__":
     #     plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
     #     plt.grid()
     #     plt.legend()
-    #plt.show()
+    # plt.show()
