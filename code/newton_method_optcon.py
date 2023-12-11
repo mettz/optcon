@@ -1,17 +1,17 @@
 import numpy as np
 import dynamics as dyn
 import cost as cst
-import time
+
+tf = 10  # final time in seconds
+dt = dyn.dt  # get discretization step from dynamics
+ns = dyn.number_of_states
+ni = dyn.number_of_inputs
+TT = int(tf / dt)  # discrete-time samples
 
 def newton_method_optcon (xx_ref, uu_ref):
     #Step 0 (Initialization): consider an initla guess for the trajectory, so at iteration 0.
                             #It must contain all the trajectory (so until TT, time in main 10000), k  times (number of iterations)
     print("Newton method starting...")
-    tf = 10  # final time in seconds
-    dt = dyn.dt  # get discretization step from dynamics
-    ns = dyn.number_of_states
-    ni = dyn.number_of_inputs
-    TT = int(tf / dt)  # discrete-time samples
 
     max_iters = 10
     xx = np.ones((ns, TT, max_iters)) # 3x10000
@@ -56,13 +56,15 @@ def newton_method_optcon (xx_ref, uu_ref):
         print(f"Iteration {kk}")
         if kk==0:
            #Initialization of the trajectory at the equilibrium point
-            xx[:, :, kk] = xx_ref-0.1
-            uu[:, :, kk] = uu_ref-0.1
-        
+            xx[:, :, kk] = xx_ref
+            xx[:,0,kk+1] = xx_ref[:,0]
+            uu[:, :, kk] = uu_ref
+            delta_x[:, 0, kk] = xx_ref[:,0]
+
         #Evaluate nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians
         for tt in range(TT): #da 0 a 9999
-            if tt == TT:
-                lT[kk]=cst.termcost(xx[:, tt, kk],xx_ref[:, tt, kk])[1] #VETTORE, per la costate equation
+            if tt == TT-1:
+                lT[kk]=cst.termcost(xx[:, tt, kk],xx_ref[:, tt])[0] #VETTORE, per la costate equation
             else:
                 #at[:,tt,kk], bt[:,tt,kk] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1:].squeeze() 
                 at[:,tt,kk]=cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1].squeeze()
@@ -78,7 +80,7 @@ def newton_method_optcon (xx_ref, uu_ref):
         print("Evaluation of nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians done\n")
         
 
-        #Solve backward the costate equation 
+        """ #Solve backward the costate equation 
 
         lmbd[:, TT-1, kk]=lT[kk] #Inizializzazione
         for tt in reversed(range(TT - 1)):  # integration backward in time
@@ -87,7 +89,7 @@ def newton_method_optcon (xx_ref, uu_ref):
             Bt[:,:,tt,kk] = fu[:,:,tt,kk].T
 
             lmbd[:, tt, kk] = lmbd[:, tt + 1, kk] @ At[:,:,tt,kk] + at[:,tt,kk]
-        print("Costate equation solved\n")
+        print("Costate equation solved\n") """
 
         #Compute for all t in TT-1, Qt,k ; Rt,k ; St,k, qt,k, rt,k ====> USE REGULARIZATION (slide 13)
         print("Computing Qt,k ; Rt,k ; St,k, qt,k, rt,k...")
@@ -125,8 +127,8 @@ def newton_method_optcon (xx_ref, uu_ref):
 
             # Check positive definiteness
 
-            """ MMt_inv = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ Bt[:,:,tt,kk])
-            mmt = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pp[:,tt+1,kk]"""
+            MMt_inv[:,:,tt,kk] = np.linalg.inv(Rt[:,:,tt,kk] + Bt[:,:,tt,kk].T @ PP[:,:,tt+1,kk] @ Bt[:,:,tt,kk])
+            mmt[:,tt,kk] = rrt[:,tt,kk] + Bt[:,:,tt,kk].T @ pp[:,tt+1,kk]
             # for other purposes we could add a regularization step here...
 
             KK[:,:,tt,kk] = -MMt_inv[:,:,tt,kk]@(Bt[:,:,tt,kk].T@PP[:,:,tt+1,kk]@At[:,:,tt,kk] + St[:,:,tt,kk])
@@ -136,14 +138,14 @@ def newton_method_optcon (xx_ref, uu_ref):
         print("Computing delta_u and delta_x...")
         # Evaluate delta_u
         for tt in range(TT - 1):
-            delta_u[:, tt,kk] = KK[:,:,tt,kk]@xx[:, tt,kk] + sigma_t[:,tt,kk]
-            delta_x[:,tt+1,kk] = At[:,:,tt,kk]@xx[:,tt,kk] + Bt[:,:,tt,kk]@uu[:, tt, kk]
+            delta_u[:, tt,kk] = KK[:,:,tt,kk]@delta_x[:, tt,kk] + sigma_t[:,tt,kk]
+            delta_x[:,tt+1,kk] = At[:,:,tt,kk]@delta_x[:,tt,kk] + Bt[:,:,tt,kk]@delta_u[:, tt, kk]
         print("delta_u and delta_x computed \n")
 
         #STEP 2: compute the input sequence
         print("Computing the input sequence...")
         
-        stepsize=0.5
+        stepsize=0.7
         for tt in range(TT-1):
             uu[:,tt,kk+1] = uu[:,tt,kk] + stepsize*delta_u[:,tt,kk]
         print("Input sequence computed \n")
@@ -152,11 +154,22 @@ def newton_method_optcon (xx_ref, uu_ref):
         print("Computing the state sequence...")
         
         for tt in range(TT-1):
-            xx[:,tt+1,kk+1] = dyn.dynamics(xx[:,tt,kk],uu[:,tt,kk])[0]
+            
+            xx[:,tt+1,kk+1] = dyn.dynamics(xx[:,tt,kk+1],uu[:,tt,kk+1])[0]
         print("State sequence computed \n")
 
     xx_star = xx[:, :, max_iters - 1]
     uu_star = uu[:, :, max_iters - 1]
-    uu_star[:, -1] = uu_star[:, -2]  # for plotting purposes       
+    #uu_star[:, -1] = uu_star[:, -2]  # for plotting purposes  
 
+    for kk in range(max_iters):
+        cost = 0
+        for tt in range(TT - 1):
+            cost += cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
+            print("delta_u", delta_u[:, tt, kk])
+        cost += cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[0]
+        
+        print(f"Cost at iteration {kk}: {cost}")
+    
+    
     return xx_star, uu_star 

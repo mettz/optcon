@@ -1,12 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import dynamics
-import plots
 
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
-from gradient_method_optcon import gradient_method, max_iters, descent, JJ, TT, tf, ni, ns
-from newton_method_optcon import newton_method_optcon
-from using_cvxpy import newton_method_optcon_cvxpy
+import newton_method_optcon as nmo
 
 # import cost functions
 import cost as cost
@@ -45,76 +42,77 @@ if __name__ == "__main__":
     final_eq_input = np.array([final_eq[1], final_eq[2]])
     print(f"Final eq point:  {final_eq}") 
 
-    # Building transition between equilibria
-    time = 10000
-    reference_curve_states = np.zeros((3, time))
-    reference_curve_inputs = np.zeros((2, time))
-    for i in range(time):
-        if i < time / 2:
-            reference_curve_states[:, i] = initial_eq_state
-            reference_curve_inputs[:, i] = initial_eq_input
+    xx_ref = np.zeros((nmo.ns, nmo.TT))
+    uu_ref = np.zeros((nmo.ni, nmo.TT))
+    for i in range(nmo.TT):
+        if i < nmo.TT / 2:
+            xx_ref[:, i] = initial_eq_state
+            uu_ref[:, i] = initial_eq_input
         else:
-            reference_curve_states[:, i] = final_eq_state
-            reference_curve_inputs[:, i] = final_eq_input
+            xx_ref[:, i] = final_eq_state
+            uu_ref[:, i] = final_eq_input
 
-    print(f"Reference curve states: {reference_curve_states} with shape {reference_curve_states.shape}")
-    
-    ####GRADIENT METHOD####
-    #xx_star, uu_star = gradient_method(reference_curve_states, reference_curve_inputs)
-    
-    ####NEWTON METHOD####
-    xx_star, uu_star = newton_method_optcon_cvxpy(reference_curve_states, reference_curve_inputs)
+    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+
+    tt_hor = np.linspace(0, nmo.tf, nmo.TT)
+    fig, axs = plt.subplots(nmo.ns + nmo.ni, 1, sharex="all")
+
+    axs[0].plot(tt_hor, xx_star[0, :], linewidth=2)
+    axs[0].plot(tt_hor, xx_ref[0, :], "g--", linewidth=2)
+    axs[0].grid()
+    axs[0].set_ylabel("$x_1 = V$")
+    axs[0].set_xlabel("time")
 
 
-    #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
-    plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
+    axs[1].plot(tt_hor, xx_star[1, :], linewidth=2)
+    axs[1].plot(tt_hor, xx_ref[1, :], "g--", linewidth=2)
+    axs[1].grid()
+    axs[1].set_ylabel("$x_2 = \\beta$")
+    axs[1].set_xlabel("time")
 
-    #states = ["x", "y", "psi", "V", "beta", "psi_dot"]
-    states = ["V", "beta", "psi_dot"]
-    plt.figure(figsize = (10, 10))
-    plt.clf()
-    plt.title("Reference curve for states")
-    for i in range(np.size(states)):
-        plt.subplot(3,1,1+i)
-        plt.plot(reference_curve_states[i, :], label=f"Reference curve {states[i]}")
-        plt.grid()
-        plt.legend()
+    axs[2].plot(tt_hor, xx_star[2, :], linewidth=2)
+    axs[2].plot(tt_hor, xx_ref[2, :], "g--", linewidth=2)
+    axs[2].grid()
+    axs[2].set_ylabel("$x_2 = \\dot{psi}$")
+    axs[2].set_xlabel("time")
+
+    axs[3].plot(tt_hor, uu_star[0, :], "r", linewidth=2)
+    axs[3].plot(tt_hor, uu_ref[0, :], "r--", linewidth=2)
+    axs[3].grid()
+    axs[3].set_ylabel("$u_1 = \\delta$")
+    axs[3].set_xlabel("time")
+
+    axs[4].plot(tt_hor, uu_star[1, :], "r", linewidth=2)
+    axs[4].plot(tt_hor, uu_ref[1, :], "r--", linewidth=2)
+    axs[4].grid()
+    axs[4].set_ylabel("$u_2 = F_x$")
+    axs[4].set_xlabel("time")
+
+    plt.show()
+
+
+    # #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
+    # plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
+
+    # #states = ["x", "y", "psi", "V", "beta", "psi_dot"]
+    # states = ["V", "beta", "psi_dot"]
+    # plt.figure(figsize = (10, 10))
+    # plt.clf()
+    # plt.title("Reference curve for states")
+    # for i in range(np.size(states)):
+    #     plt.subplot(3,1,1+i)
+    #     plt.plot(reference_curve_states[i, :], label=f"Reference curve {states[i]}")
+    #     plt.grid()
+    #     plt.legend()
+    # #plt.show()
+
+    # inputs = ["delta", "Fx"]
+    # plt.figure(figsize = (10, 10))
+    # plt.clf()
+    # plt.title("Reference curve for inputs")
+    # for i in range(np.size(inputs)):
+    #     plt.subplot(2,1,1+i)
+    #     plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
+    #     plt.grid()
+    #     plt.legend()
     #plt.show()
-
-    inputs = ["delta", "Fx"]
-    plt.figure(figsize = (10, 10))
-    plt.clf()
-    plt.title("Reference curve for inputs")
-    for i in range(np.size(inputs)):
-        plt.subplot(2,1,1+i)
-        plt.plot(reference_curve_inputs[i, :], label=f"Reference curve {inputs[i]}")
-        plt.grid()
-        plt.legend()
-    #plt.show()
-
-
-"""
-# Newton's method for optimal control
-def newtons_method(x0, max_iter=100, tol=1e-6):
-    x = x0
-    for _ in range(max_iter):
-        # Evaluate the dynamics, cost, and constraints at the current iterate
-        dynamics_x = dynamics(x, None)  # You may need to include the current control input
-        cost_x = cost(None)  # You need to include the current control input
-
-        # Formulate the Lagrangian Hessian matrix
-        lagrangian_hessian = hessian(dynamics_x)  # Replace with the actual Hessian matrix of the Lagrangian
-
-        # Solve the linearized subproblem using the Hessian matrix
-        linearized_subproblem = minimize(cost, x, method='SLSQP', jac=None, hess=lagrangian_hessian, constraints=None)
-
-        # Update the control input
-        u_new = linearized_subproblem.x
-
-        # Check for convergence
-        if np.linalg.norm(u_new - x) < tol:
-            break
-
-        x = u_new
-
-    return x"""
