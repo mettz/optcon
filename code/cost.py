@@ -1,7 +1,7 @@
 import numpy as np
 import dynamics as dyn
 
-number_of_states = dyn.number_of_states  # 3
+number_of_states = dyn.number_of_states  # 6
 number_of_inputs = dyn.number_of_inputs  # 2
 
 # QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
@@ -12,8 +12,8 @@ number_of_inputs = dyn.number_of_inputs  # 2
 # Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
 # anche perchè l'equilibrio dipende da queste ultime
 
-QQt = 0.001 * np.diag([1.0, 1.0, 1.0])
-RRt = 0.001 * np.eye(number_of_inputs)
+QQt = 10000000000 * np.diag([0.000001, 0.000001, 0.000001, 100000.0, 100000.0, 100000.0])
+RRt = 0.000001 * np.eye(number_of_inputs)
 
 QQT = QQt
 

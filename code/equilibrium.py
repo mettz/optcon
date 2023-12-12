@@ -50,7 +50,7 @@ def nonlinear_system_continuous(variables, V_des, beta_des):
 # Function to find equilibrium point for a given input
 def find_equilibrium_point(f, **kwargs):
     # Initial random guess for the equilibrium point
-    # initial_guess is [x:(psi_dot), u:(delta, Fx)]
+    # The initial_guess is [x:(psi_dot), u:(delta, Fx)]
     initial_guess = kwargs.get("initial_guess")
     args = kwargs.get("args")
     print("Initial guess:", initial_guess)

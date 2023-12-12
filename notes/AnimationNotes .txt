@@ -1,0 +1,8 @@
+Notes about the realization of the animation for the OPTCON project
+
+We need to update the animation for each time step. So a good idea is to have a list of states provided by the optimal control calculation. So, we need to implement the optimal control before starting the implementation of the animation. The car is represented by a red circular marker for example, so a symbolic shape that performs the trajectories we have computed. Them we need to set the number of frames. Then we can create the animation using the function FuncAnimation provided by matplotlib.
+
+Possible advanced implemenations:
+- Interactive controls: allow for interactive controls during the simulation. For example, users might want to pause, resume, or modify certain parameters of the simulation in real-time. You can implement keyboard or mouse controls for those interactions.
+- Parameter Tuning Visualization: if your simulation involves parameter tuning, consider visualizing the effects of changing parameters. This can help in understanding how changes impact the behavior of the autonomous car.
+- Realistic Graphics: consider using more realistic graphics for your car and environment. This can enhance the visual appeal of your simulation. If you're using 3D graphics, libraries like 'OpenGL' or 'Three.js' can be beneficial.
