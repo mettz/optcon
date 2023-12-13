@@ -12,8 +12,8 @@ number_of_inputs = dyn.number_of_inputs  # 2
 # Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
 # anche perchè l'equilibrio dipende da queste ultime
 
-QQt = 10000000000 * np.diag([0.000001, 0.000001, 0.000001, 100000.0, 100000.0, 100000.0])
-RRt = 0.000001 * np.eye(number_of_inputs)
+QQt = 1000000 * np.eye(number_of_states)
+RRt = 0.001 * np.eye(number_of_inputs)
 
 QQT = QQt
 

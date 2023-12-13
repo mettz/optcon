@@ -11,7 +11,7 @@ b = 1.029  # m
 mu = 1  # nodim
 g = 9.81  # m/s^2
 
-number_of_states = 6
+number_of_states = 3
 number_of_inputs = 2
 
 
@@ -34,7 +34,7 @@ def dynamics(xx, uu):
     Fzf = (mass * g * b) / (a + b)
     Fzr = (mass * g * a) / (a + b)
 
-    x, y, psi, V, beta, psi_dot = xx
+    V, beta, psi_dot = xx
     delta, Fx = uu
 
     # Definition of the lateral forces
@@ -46,11 +46,11 @@ def dynamics(xx, uu):
     # xx = (x, y, psi, V, beta, psi_dot) --- uu = (delta, Fx)
 
     # Euler discretization of the continuous time model
-    x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
+    # x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
 
-    y_plus = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi))
+    # y_plus = y + dt * (V * np.cos(beta) * np.sin(psi) + V * np.sin(beta) * np.cos(psi))
 
-    psi_plus = psi + dt * psi_dot
+    # psi_plus = psi + dt * psi_dot
 
     V_plus = V + dt * ((1 / mass) * (Fyr * np.sin(beta) + Fx * np.cos(beta - delta) + Fyf * np.sin(beta - delta)))
 
@@ -58,87 +58,169 @@ def dynamics(xx, uu):
 
     psi_dot_plus = psi_dot + dt * (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)
 
-    xx_plus = np.array([x_plus, y_plus, psi_plus, V_plus, beta_plus, psi_dot_plus]).squeeze()
-
-    nabla_x = np.array(
+    xx_plus = np.array(
         [
-            1,
-            0,
-            dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
-            dt * (-np.sin(beta) * np.sin(psi) + np.cos(beta) * np.cos(psi)),
-            dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
-            0,
+            # x_plus,
+            # y_plus,
+            # psi_plus,
+            V_plus,
+            beta_plus,
+            psi_dot_plus,
         ]
-    )
+    ).squeeze()
 
-    nabla_y = np.array(
-        [
-            0,
-            1,
-            dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
-            dt * (np.sin(beta) * np.cos(psi) + np.sin(psi) * np.cos(beta)),
-            dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
-            0,
-        ]
-    )
+    # nabla_x = np.array(
+    #     [
+    #         # 1,
+    #         # 0,
+    #         # dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
+    #         dt * (-np.sin(beta) * np.sin(psi) + np.cos(beta) * np.cos(psi)),
+    #         dt * (-V * np.sin(beta) * np.cos(psi) - V * np.sin(psi) * np.cos(beta)),
+    #         0,
+    #     ]
+    # )
 
-    nabla_psi = np.array([0, 0, 1, 0, 0, dt])
+    # nabla_y = np.array(
+    #     [
+    #         # 0,
+    #         # 1,
+    #         # dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
+    #         dt * (np.sin(beta) * np.cos(psi) + np.sin(psi) * np.cos(beta)),
+    #         dt * (-V * np.sin(beta) * np.sin(psi) + V * np.cos(beta) * np.cos(psi)),
+    #         0,
+    #     ]
+    # )
+
+    # nabla_psi = np.array(
+    #     [
+    #         # 0,
+    #         # 0,
+    #         # 1,
+    #         0,
+    #         0,
+    #         dt,
+    #     ]
+    # )
 
     nabla_V = np.array(
         [
-            0,
-            0,
-            0,
-            dt*(Fzf*mu*(-np.sin(beta)/(V*np.cos(beta)) + (V*np.sin(beta) + a*psi_dot)/(V**2*np.cos(beta)))*np.sin(beta - delta) - Fzr*mu*np.sin(beta)**2/(V*np.cos(beta)) - Fzr*mu*(-V*np.sin(beta) + b*psi_dot)*np.sin(beta)/(V**2*np.cos(beta)))/mass + 1,
-            dt*(-Fx*np.sin(beta - delta) + Fzf*mu*(-1 - (V*np.sin(beta) + a*psi_dot)*np.sin(beta)/(V*np.cos(beta)**2))*np.sin(beta - delta) + Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.cos(beta - delta) - Fzr*mu*np.sin(beta) + Fzr*mu*(-V*np.sin(beta) + b*psi_dot)*np.sin(beta)**2/(V*np.cos(beta)**2) + Fzr*mu*(-V*np.sin(beta) + b*psi_dot)/V)/mass,
-            dt*(-Fzf*a*mu*np.sin(beta - delta)/(V*np.cos(beta)) + Fzr*b*mu*np.sin(beta)/(V*np.cos(beta)))/mass,
+            # 0,
+            # 0,
+            # 0,
+            dt
+            * (
+                Fzf * mu * (-np.sin(beta) / (V * np.cos(beta)) + (V * np.sin(beta) + a * psi_dot) / (V**2 * np.cos(beta))) * np.sin(beta - delta)
+                - Fzr * mu * np.sin(beta) ** 2 / (V * np.cos(beta))
+                - Fzr * mu * (-V * np.sin(beta) + b * psi_dot) * np.sin(beta) / (V**2 * np.cos(beta))
+            )
+            / mass
+            + 1,
+            dt
+            * (
+                -Fx * np.sin(beta - delta)
+                + Fzf * mu * (-1 - (V * np.sin(beta) + a * psi_dot) * np.sin(beta) / (V * np.cos(beta) ** 2)) * np.sin(beta - delta)
+                + Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.cos(beta - delta)
+                - Fzr * mu * np.sin(beta)
+                + Fzr * mu * (-V * np.sin(beta) + b * psi_dot) * np.sin(beta) ** 2 / (V * np.cos(beta) ** 2)
+                + Fzr * mu * (-V * np.sin(beta) + b * psi_dot) / V
+            )
+            / mass,
+            dt * (-Fzf * a * mu * np.sin(beta - delta) / (V * np.cos(beta)) + Fzr * b * mu * np.sin(beta) / (V * np.cos(beta))) / mass,
         ]
     )
 
     nabla_beta = np.array(
         [
-            0,
-            0,
-            0,
-            dt*((Fzf*mu*(-np.sin(beta)/(V*np.cos(beta)) + (V*np.sin(beta) + a*psi_dot)/(V**2*np.cos(beta)))*np.cos(beta - delta) - Fzr*mu*np.sin(beta)/V - Fzr*mu*(-V*np.sin(beta) + b*psi_dot)/V**2)/(V*mass) - (-Fx*np.sin(beta - delta) + Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.cos(beta - delta) + Fzr*mu*(-V*np.sin(beta) + b*psi_dot)/V)/(V**2*mass)),
-            1 + dt*(-Fx*np.cos(beta - delta) + Fzf*mu*(-1 - (V*np.sin(beta) + a*psi_dot)*np.sin(beta)/(V*np.cos(beta)**2))*np.cos(beta - delta) - Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.sin(beta - delta) - Fzr*mu*np.cos(beta))/(V*mass),
-            dt*(-1 + (-Fzf*a*mu*np.cos(beta - delta)/(V*np.cos(beta)) + Fzr*b*mu/V)/(V*mass)),
+            # 0,
+            # 0,
+            # 0,
+            dt
+            * (
+                (
+                    Fzf * mu * (-np.sin(beta) / (V * np.cos(beta)) + (V * np.sin(beta) + a * psi_dot) / (V**2 * np.cos(beta))) * np.cos(beta - delta)
+                    - Fzr * mu * np.sin(beta) / V
+                    - Fzr * mu * (-V * np.sin(beta) + b * psi_dot) / V**2
+                )
+                / (V * mass)
+                - (
+                    -Fx * np.sin(beta - delta)
+                    + Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.cos(beta - delta)
+                    + Fzr * mu * (-V * np.sin(beta) + b * psi_dot) / V
+                )
+                / (V**2 * mass)
+            ),
+            1
+            + dt
+            * (
+                -Fx * np.cos(beta - delta)
+                + Fzf * mu * (-1 - (V * np.sin(beta) + a * psi_dot) * np.sin(beta) / (V * np.cos(beta) ** 2)) * np.cos(beta - delta)
+                - Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.sin(beta - delta)
+                - Fzr * mu * np.cos(beta)
+            )
+            / (V * mass),
+            dt * (-1 + (-Fzf * a * mu * np.cos(beta - delta) / (V * np.cos(beta)) + Fzr * b * mu / V) / (V * mass)),
         ]
     )
 
     nabla_psi_dot = np.array(
         [
-            0,
-            0,
-            0,
-            dt*(Fzf*a*mu*(-np.sin(beta)/(V*np.cos(beta)) + (V*np.sin(beta) + a*psi_dot)/(V**2*np.cos(beta)))*np.cos(delta) + Fzr*b*mu*np.sin(beta)/(V*np.cos(beta)) + Fzr*b*mu*(-V*np.sin(beta) + b*psi_dot)/(V**2*np.cos(beta)))/Iz,
-            dt*(Fzf*a*mu*(-1 - (V*np.sin(beta) + a*psi_dot)*np.sin(beta)/(V*np.cos(beta)**2))*np.cos(delta) + Fzr*b*mu - Fzr*b*mu*(-V*np.sin(beta) + b*psi_dot)*np.sin(beta)/(V*np.cos(beta)**2))/Iz,
-            1 + dt*(-Fzf*a**2*mu*np.cos(delta)/(V*np.cos(beta)) - Fzr*b**2*mu/(V*np.cos(beta)))/Iz,
+            # 0,
+            # 0,
+            # 0,
+            dt
+            * (
+                Fzf * a * mu * (-np.sin(beta) / (V * np.cos(beta)) + (V * np.sin(beta) + a * psi_dot) / (V**2 * np.cos(beta))) * np.cos(delta)
+                + Fzr * b * mu * np.sin(beta) / (V * np.cos(beta))
+                + Fzr * b * mu * (-V * np.sin(beta) + b * psi_dot) / (V**2 * np.cos(beta))
+            )
+            / Iz,
+            dt
+            * (
+                Fzf * a * mu * (-1 - (V * np.sin(beta) + a * psi_dot) * np.sin(beta) / (V * np.cos(beta) ** 2)) * np.cos(delta)
+                + Fzr * b * mu
+                - Fzr * b * mu * (-V * np.sin(beta) + b * psi_dot) * np.sin(beta) / (V * np.cos(beta) ** 2)
+            )
+            / Iz,
+            1 + dt * (-Fzf * a**2 * mu * np.cos(delta) / (V * np.cos(beta)) - Fzr * b**2 * mu / (V * np.cos(beta))) / Iz,
         ]
     )
 
-    # fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
-    fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
+    fx = np.array(
+        [
+            # nabla_x,
+            # nabla_y,
+            # nabla_psi,
+            nabla_V,
+            nabla_beta,
+            nabla_psi_dot,
+        ]
+    )
 
     nabla_delta = np.array(
         [
-            0,
-            0,
-            0,
-            dt*(Fx*np.sin(beta - delta) - Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.cos(beta - delta) + Fzf*mu*np.sin(beta - delta))/mass,
-            dt*(Fx*np.cos(beta - delta) + Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.sin(beta - delta) + Fzf*mu*np.cos(beta - delta))/(V*mass),
-            a*dt*(Fx*np.cos(delta) - Fzf*mu*(delta - (V*np.sin(beta) + a*psi_dot)/(V*np.cos(beta)))*np.sin(delta) + Fzf*mu*np.cos(delta))/Iz
+            # 0,
+            # 0,
+            # 0,
+            dt
+            * (Fx * np.sin(beta - delta) - Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.cos(beta - delta) + Fzf * mu * np.sin(beta - delta))
+            / mass,
+            dt
+            * (Fx * np.cos(beta - delta) + Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.sin(beta - delta) + Fzf * mu * np.cos(beta - delta))
+            / (V * mass),
+            a * dt * (Fx * np.cos(delta) - Fzf * mu * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta))) * np.sin(delta) + Fzf * mu * np.cos(delta)) / Iz,
         ]
     )
 
-    nabla_Fx = np.array([
-        0, 
-        0, 
-        0,
-        dt*np.cos(beta - delta)/mass,
-        -dt*np.sin(beta - delta)/(V*mass),
-        a*dt*np.sin(delta)/Iz
-        ])
+    nabla_Fx = np.array(
+        [
+            # 0,
+            # 0,
+            # 0,
+            dt * np.cos(beta - delta) / mass,
+            -dt * np.sin(beta - delta) / (V * mass),
+            a * dt * np.sin(delta) / Iz,
+        ]
+    )
 
     fu = np.array([nabla_delta, nabla_Fx])
 

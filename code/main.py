@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import dynamics
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
-import newton_method_optcon as nmo
+import newton_method_optcon_cvxpy as nmo
 import cost as cost
 import signal
 
@@ -16,14 +16,14 @@ if __name__ == "__main__":
     # initial_eq contiene psi_dot, delta e Fx del primo punto di equiilibrio
     # equilibrium point = [x,y,psi,V,beta,psi_dot]
     # equilibrium input = [delta, Fx]
-    x_init_1= 0.0
+    x_init_1 = 0.0
     y_init_1 = 0.0
     psi_init_1 = 0.0
-    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([x_init_1, y_init_1, psi_init_1, V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
+    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
     last_index = len(trajectory_xx) - 1
-    '''print(f"Last index: {last_index}")
-    print(f"Last state: {trajectory_xx[last_index]}")'''
-    initial_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_1, beta_des_1, initial_eq[0]])
+    """print(f"Last index: {last_index}")
+    print(f"Last state: {trajectory_xx[last_index]}")"""
+    initial_eq_state = np.array([V_des_1, beta_des_1, initial_eq[0]])
     initial_eq_input = np.array([initial_eq[1], initial_eq[2]])
     print(f"Initial eq state: {initial_eq_state}")
     print(f"Initial eq input: {initial_eq_input}")
@@ -35,8 +35,8 @@ if __name__ == "__main__":
     x_init_2 = 0.0
     y_init_2 = 0.0
     psi_init_2 = 0.0
-    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([x_init_2, y_init_2, psi_init_2, V_des_2, beta_des_2, final_eq[0]]), np.array([final_eq[1], final_eq[2]]))
-    final_eq_state = np.array([trajectory_xx[last_index, 0], trajectory_xx[last_index, 1], trajectory_xx[last_index, 2], V_des_2, beta_des_2, final_eq[0]])
+    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([V_des_2, beta_des_2, final_eq[0]]), np.array([final_eq[1], final_eq[2]]))
+    final_eq_state = np.array([V_des_2, beta_des_2, final_eq[0]])
     final_eq_input = np.array([final_eq[1], final_eq[2]])
     print(f"Final eq state: {final_eq_state}")
     print(f"Final eq input: {final_eq_input}")
@@ -53,37 +53,35 @@ if __name__ == "__main__":
         else:
             xx_ref[:, i] = final_eq_state
             uu_ref[:, i] = final_eq_input
-    
 
-    # Plot of the reference curve 
-    '''
+    # Plot of the reference curve
+    """
     The plots of the refernce curve are printed if the variable see_reference_curve_plots is set to True
-    '''
-    states = ["x", "y", "psi", "V", "beta", "psi_dot"]
+    """
+    states = ["V", "beta", "psi_dot"]
     inputs = ["delta", "Fx"]
 
     see_reference_curve_plots = False
     if see_reference_curve_plots:
-        plt.figure(figsize = (10, 10))
+        plt.figure(figsize=(10, 10))
         plt.clf()
         plt.title("Reference curve for states")
         for i in range(np.size(states)):
-            plt.subplot(3,2,1+i)
+            plt.subplot(3, 2, 1 + i)
             plt.plot(xx_ref[i, :], label=f"Reference curve {states[i]}")
             plt.grid()
             plt.legend()
         plt.show()
 
-        plt.figure(figsize = (10, 10))
+        plt.figure(figsize=(10, 10))
         plt.clf()
         plt.title("Reference curve for inputs")
         for i in range(np.size(inputs)):
-            plt.subplot(2,1,1+i)
+            plt.subplot(2, 1, 1 + i)
             plt.plot(uu_ref[i, :], label=f"Reference curve {inputs[i]}")
             plt.grid()
             plt.legend()
         plt.show()
-    
 
     # Application of the newthon method
     xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
@@ -97,15 +95,27 @@ if __name__ == "__main__":
     plt.clf()
     plt.title("Trajectory following")
     for i in range(np.size(states)):
-        plt.subplot(3,2,1+i)
+        plt.subplot(3, 1, 1 + i)
         plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {states[i]}")
         plt.plot(tt_hor, xx_star[i, :], label=f"State {states[i]}")
-        
+
         plt.grid()
         plt.legend()
     plt.show()
 
-    
+    tt_hor = np.linspace(0, nmo.tf, nmo.TT)
+    plt.figure()
+    plt.clf()
+    plt.title("Trajectory following inputs")
+    for i in range(np.size(inputs)):
+        plt.subplot(2, 1, 1 + i)
+        plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {inputs[i]}")
+        plt.plot(tt_hor, uu_star[i, :], label=f"State {inputs[i]}")
+
+        plt.grid()
+        plt.legend()
+    plt.show()
+
     # fig, axs = plt.subplots(nmo.ns + nmo.ni, 1, sharex="all")
 
     # axs[0].plot(tt_hor, xx_star[0, :], linewidth = 2)
@@ -142,5 +152,3 @@ if __name__ == "__main__":
 
     # #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
     # plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
-
-    
