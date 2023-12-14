@@ -1,5 +1,6 @@
 from sympy import symbols, sin, cos, diff
 
+# Definition of symbols to use sympy
 x, y, psi, V, beta, psi_dot, delta, Fx, dt, mu, Fzf, Fzr, Fyf, Fyr, mass, Iz, a, b, g = symbols("x y psi V beta psi_dot delta Fx dt mu Fzf Fzr Fyf Fyr mass Iz a b g")
 
 # Fzf = (mass * g * b) / (a + b)

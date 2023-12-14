@@ -1,8 +1,6 @@
 import numpy as np
-from sympy import symbols, diff
 
-x, y, psi, V, beta, psi_dot = symbols("x y psi V beta psi_dot")
-
+# Definition of the parameters of the model
 dt = 1e-2  # discretization step
 mass = 1480  # Kg
 Iz = 1950  # Kgm^2
@@ -11,39 +9,44 @@ b = 1.029  # m
 mu = 1  # nodim
 g = 9.81  # m/s^2
 
+# Definition of the number of states and inputs
 number_of_states = 6
 number_of_inputs = 2
 
 
 def dynamics(xx, uu):
     """
-    Dynamics of a discrete-time mass spring damper system
+    Dynamics of an autonomous car
 
     Args
-        - xx \in \R^6 state at time t
-        - uu \in \R^2 input at time t
+        - xx: in R^6 state at time t
+        - uu: in R^2 input at time t
 
     Return
         - next state xx_{t+1}
+        - jacobian of the dynamics with respect to xx
+        - jacobian of the dynamics with respect to uu
     """
 
     xx = xx.squeeze()
     uu = uu.squeeze()
 
+    # Definition of the states
+    x, y, psi, V, beta, psi_dot = xx
+
+    # Definition of the inputs
+    delta, Fx = uu
+
     # Definition of the vertical forces on the front and rear wheel
     Fzf = (mass * g * b) / (a + b)
     Fzr = (mass * g * a) / (a + b)
-
-    x, y, psi, V, beta, psi_dot = xx
-    delta, Fx = uu
 
     # Definition of the lateral forces
     Fyf = mu * Fzf * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta)))  # mu * Fzf * Bf
     Fyr = mu * Fzr * (-(V * np.sin(beta) - b * psi_dot) / (V * np.cos(beta)))  # mu * Fzr * Br
 
+    # Initialization of the next state xx_plus
     xx_plus = np.zeros((number_of_states,))
-
-    # xx = (x, y, psi, V, beta, psi_dot) --- uu = (delta, Fx)
 
     # Euler discretization of the continuous time model
     x_plus = x + dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))
@@ -58,8 +61,10 @@ def dynamics(xx, uu):
 
     psi_dot_plus = psi_dot + dt * (1 / Iz) * ((Fx * np.sin(delta) + Fyf * np.cos(delta)) * a - Fyr * b)
 
+    # Definition of the next state xx_plus
     xx_plus = np.array([x_plus, y_plus, psi_plus, V_plus, beta_plus, psi_dot_plus]).squeeze()
 
+    # Definition of the jacobian of the dynamics with respect to xx
     nabla_x = np.array(
         [
             1,
@@ -117,9 +122,9 @@ def dynamics(xx, uu):
         ]
     )
 
-    # fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
     fx = np.array([nabla_x, nabla_y, nabla_psi, nabla_V, nabla_beta, nabla_psi_dot])
 
+    # Definition of the jacobian of the dynamics with respect to uu
     nabla_delta = np.array(
         [
             0,
@@ -146,14 +151,33 @@ def dynamics(xx, uu):
 
 
 def trajectory(points, xx, uu):
+    """
+    Trajectory of an autonomous car
+
+    Args
+        - points: number of points of the trajectory
+        - xx: in R^6 state at time t
+        - uu: in R^2 input at time t
+
+    Return
+        - steps
+        - trajectory_xx: state trajectory of the car
+        - trajectory_uu: input trajectory of the car
+    """
+
+    # Initialization 
     steps = np.linspace(0, points, points * 1000)
     trajectory_xx = np.zeros((len(steps), len(xx)))
     trajectory_uu = np.zeros((len(steps), len(uu)))
 
     for i in range(len(steps)):
+        # Computation of the next state xx_plus
         xx_plus, _, _ = dynamics(xx, uu)
+        # Computation of the state trajectory at the step i
         trajectory_xx[i, :] = xx_plus
+        # Update of the state xx
         xx = xx_plus
+        # Computation of the input trajectory at the step i
         trajectory_uu[i, :] = uu
 
     return steps, trajectory_xx, trajectory_uu
