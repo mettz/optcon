@@ -3,7 +3,7 @@ from sympy import symbols, diff
 
 x, y, psi, V, beta, psi_dot = symbols("x y psi V beta psi_dot")
 
-dt = 1e-2  # discretization step
+dt = 1e-3  # discretization step
 mass = 1480  # Kg
 Iz = 1950  # Kgm^2
 a = 1.421  # m

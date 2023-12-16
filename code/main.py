@@ -5,6 +5,7 @@ from equilibrium import find_equilibrium_point, nonlinear_system_discretized
 import newton_method_optcon_cvxpy as nmo
 import cost as cost
 import signal
+from reference_trajectories import smooth_trajectory, step_trajectory
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -41,18 +42,9 @@ if __name__ == "__main__":
     print(f"Final eq state: {final_eq_state}")
     print(f"Final eq input: {final_eq_input}")
 
-    # Initialization of the reference curve
-    xx_ref = np.zeros((nmo.ns, nmo.TT))
-    uu_ref = np.zeros((nmo.ni, nmo.TT))
-
-    # Definition of the reference curve
-    for i in range(nmo.TT):
-        if i < (nmo.TT / 2):
-            xx_ref[:, i] = initial_eq_state
-            uu_ref[:, i] = initial_eq_input
-        else:
-            xx_ref[:, i] = final_eq_state
-            uu_ref[:, i] = final_eq_input
+    # Reference curve
+    #xx_ref, uu_ref = step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
+    xx_ref, uu_ref = smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
 
     # Plot of the reference curve
     """
@@ -61,7 +53,7 @@ if __name__ == "__main__":
     states = ["V", "beta", "psi_dot"]
     inputs = ["delta", "Fx"]
 
-    see_reference_curve_plots = False
+    see_reference_curve_plots = True
     if see_reference_curve_plots:
         plt.figure(figsize=(10, 10))
         plt.clf()

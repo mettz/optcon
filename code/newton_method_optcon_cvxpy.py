@@ -125,7 +125,7 @@ def newton_method_optcon(xx_ref, uu_ref):
             dJ[:, tt, kk] = dJ_temp.squeeze()
             deltau[:, tt, kk] = deltau_temp.squeeze()
 
-            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #
+            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #Calcolarla quando si ha la direzione di discesa
 
         # Definition of the decision variables (with the state augmentated)
         delta_x = cp.Variable((ns, TT))  # chat gpt: TT + 1
@@ -135,7 +135,7 @@ def newton_method_optcon(xx_ref, uu_ref):
         cost_function = 0
 
         for tt in range(TT - 1):
-            q = qqt[:, tt, kk]
+            q = qqt[:, tt, kk] #Occhio alle dimensioni e ai trasposti. Usare il codice della lezione
             r = rrt[:, tt, kk]
             Q = Qt[:, :, tt, kk]
             R = Rt[:, :, tt, kk]
@@ -151,7 +151,7 @@ def newton_method_optcon(xx_ref, uu_ref):
 
         # Definition of the constraints (dynamics of the system)
         constraints = []
-        constraints.append(delta_x[:, 0] == 0)
+        
         for tt in range(TT - 1):
             A = fx[:, :, tt, kk].T
             B = fu[:, :, tt, kk].T
@@ -169,7 +169,7 @@ def newton_method_optcon(xx_ref, uu_ref):
 
         # STEP 2: Computation of the input sequence
         #stepsize = armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u_star, kk, descent_arm[kk])
-        stepsize = 0.7
+        stepsize = 0.2
         for tt in range(TT - 1):
             uu[:, tt, kk + 1] = uu[:, tt, kk] + stepsize * delta_u_star[:, tt]
 
