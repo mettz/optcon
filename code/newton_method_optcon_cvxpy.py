@@ -24,6 +24,9 @@ descent_arm = np.zeros(max_iters)
 deltau = np.zeros((ni, TT, max_iters))  # Du - descent direction
 dJ = np.zeros((ni, TT, max_iters)) 
 
+Q = np.diag([0.1, 0.1, 0.1])
+R = np.diag([1, 1])
+
 def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
     stepsizes = []  # list of stepsizes
     costs_armijo = [] 
@@ -32,7 +35,7 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
 
     for ii in range(armijo_maxiters):
         # temp solution update
-
+        print("Armijo iteration {}".format(ii))
         xx_temp = np.zeros((ns, TT))
         uu_temp = np.zeros((ni, TT))
 
@@ -59,6 +62,7 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
         if JJ_temp > JJ[kk] + cc * stepsize * descent_arm:
             # update the stepsize
             stepsize = beta * stepsize
+            print("Armijo temp stepsize = {:.3e}".format(stepsize))
         else:
             if visu_armijo and kk % 10 == 0:
                 plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
@@ -76,15 +80,12 @@ def newton_method_optcon(xx_ref, uu_ref):
     kk = 0  # Definition of the iterations variable
 
     # Initialization to zero of the derivatives wrt x and u
-    fx = np.zeros((ns, ns, TT, max_iters))
-    fu = np.zeros((ni, ns, TT, max_iters))
+    fx = np.zeros((ns, ns, TT))
+    fu = np.zeros((ni, ns, TT))
 
     # Initialization to zero of the matrices Q, R, S, q and r
-    Qt = np.zeros((ns, ns, TT, max_iters))
-    Rt = np.zeros((ni, ni, TT, max_iters))
-    St = np.zeros((ni, ns, TT, max_iters))
-    qqt = np.zeros((ns, TT, max_iters))
-    rrt = np.zeros((ni, TT, max_iters))
+    qqt = np.zeros((ns, TT))
+    rrt = np.zeros((ni, TT))
 
     print("Initialization done")  # For debugging purposes
 
@@ -97,29 +98,31 @@ def newton_method_optcon(xx_ref, uu_ref):
 
         # Evaluate nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians
         # from 0 to T - 2 because in python T - 1 will be our T
+        print("Computing derivatives...")  # For debugging purposes
         for tt in range(TT - 1):
             JJ[kk] += cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0].squeeze()
-            qqt[:, tt, kk] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1].squeeze()
-            rrt[:, tt, kk] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2].squeeze()
+            qqt[:, tt] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1].squeeze()
+            rrt[:, tt] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2].squeeze()
 
 
-            fx[:, :, tt, kk] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1].squeeze()
-            fu[:, :, tt, kk] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2].squeeze()
+            fx[:, :, tt] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1].squeeze()
+            fu[:, :, tt] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2].squeeze()
 
-            Qt[:, :, tt, kk], Rt[:, :, tt, kk], St[:, :, tt, kk] = cst.hessian_cost()
         
         JJ[kk] += cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[0].squeeze()
-        qqt[:, TT - 1, kk] = cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[1].squeeze()
-        Qt[:, :, TT - 1, kk] = cst.hessian_term_cost()
+        qqt[:, TT - 1] = cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[1].squeeze()
+
+        print("Derivatives computed")  # For debugging purposes
 
         #Solve backward the costate equation to get lmbd, which is used in armijo
         lmbd_temp = cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[1]
         lmbd[:, TT - 1, kk] = lmbd_temp.squeeze()
 
+        print("Solving backward the costate equation")  # For debugging purposes
         for tt in reversed(range(TT - 1)):
         
-            lmbd[:, tt, kk][:,None] = fx[:, :, tt, kk] @ lmbd[:, tt + 1, kk][:, None] + qqt[:, tt, kk, None]  # costate equation
-            dJ_temp = fu[:, :, tt, kk] @ lmbd[:, tt + 1, kk][:, None] + rrt[:, tt, kk, None]  # gradient of J wrt u
+            lmbd[:, tt, kk][:,None] = fx[:, :, tt] @ lmbd[:, tt + 1, kk][:, None] + qqt[:, tt, None]  # costate equation
+            dJ_temp = fu[:, :, tt] @ lmbd[:, tt + 1, kk][:, None] + rrt[:, tt, None]  # gradient of J wrt u
             deltau_temp = -dJ_temp
 
             dJ[:, tt, kk] = dJ_temp.squeeze()
@@ -135,35 +138,34 @@ def newton_method_optcon(xx_ref, uu_ref):
         cost_function = 0
 
         for tt in range(TT - 1):
-            q = qqt[:, tt, kk] #Occhio alle dimensioni e ai trasposti. Usare il codice della lezione
-            r = rrt[:, tt, kk]
-            Q = Qt[:, :, tt, kk]
-            R = Rt[:, :, tt, kk]
-            S = St[:, :, tt, kk]
-            P = np.vstack((np.hstack((Q, S.T)), np.hstack((S, R))))
+            q = qqt[:, tt] #Occhio alle dimensioni e ai trasposti. Usare il codice della lezione
+            r = rrt[:, tt]
+
             # Computation of the stage cost
-            cost_function += q @ delta_x[:, tt, None] + r @ delta_u[:, tt, None] + 0.5 * cp.quad_form(cp.vstack((delta_x[:, tt, None], delta_u[:, tt, None])), P)
+            cost_function += q @ delta_x[:, tt, None] + r @ delta_u[:, tt, None] + 0.5 * cp.quad_form(delta_x[:, tt], Q) + 0.5 * cp.quad_form(delta_u[:, tt], R)
 
         # Computation of the terminal cost
-        q = qqt[:, TT - 1, kk]
-        Q = Qt[:, :, TT - 1, kk]
+        q = qqt[:, TT - 1]
         cost_function += q @ delta_x[:, TT - 1] + 0.5 * cp.quad_form(delta_x[:, TT - 1], Q)
+
+        print("Cost function computed")  # For debugging purposes
 
         # Definition of the constraints (dynamics of the system)
         constraints = []
         
         for tt in range(TT - 1):
-            A = fx[:, :, tt, kk].T
-            B = fu[:, :, tt, kk].T
+            A = fx[:, :, tt].T
+            B = fu[:, :, tt].T
             constraints.append(delta_x[:, tt + 1] == A @ delta_x[:, tt] + B @ delta_u[:, tt])
         constraints.append(delta_x[:, 0] == np.zeros(ns))
 
         # Definition of the optimization problem
         problem = cp.Problem(cp.Minimize(cost_function), constraints)
 
+        print("Problem defined")  # For debugging purposes
         # Solution of the problem
         problem.solve(verbose=False)
-
+        print("Problem solved")  # For debugging purposes
         # Achievement of the optimal values
         delta_u_star = delta_u.value
 

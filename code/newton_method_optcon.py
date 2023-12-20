@@ -2,7 +2,7 @@ import numpy as np
 import dynamics as dyn
 import cost as cst
 
-tf = 10  # final time in seconds
+tf = 5  # final time in seconds
 dt = dyn.dt  # get discretization step from dynamics
 ns = dyn.number_of_states
 ni = dyn.number_of_inputs

@@ -43,8 +43,8 @@ if __name__ == "__main__":
     print(f"Final eq input: {final_eq_input}")
 
     # Reference curve
-    #xx_ref, uu_ref = step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
-    xx_ref, uu_ref = smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
+    xx_ref, uu_ref = step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
+    #xx_ref, uu_ref = smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
 
     # Plot of the reference curve
     """
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     states = ["V", "beta", "psi_dot"]
     inputs = ["delta", "Fx"]
 
-    see_reference_curve_plots = True
+    see_reference_curve_plots = False
     if see_reference_curve_plots:
         plt.figure(figsize=(10, 10))
         plt.clf()
