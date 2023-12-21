@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import dynamics
 from equilibrium import find_equilibrium_point, nonlinear_system_discretized
 import newton_method_optcon_cvxpy as nmo
+from gradient_method_optcon import gradient_method
 import cost as cost
 import signal
 from reference_trajectories import smooth_trajectory, step_trajectory
@@ -28,6 +29,34 @@ if __name__ == "__main__":
     initial_eq_input = np.array([initial_eq[1], initial_eq[2]])
     print(f"Initial eq state: {initial_eq_state}")
     print(f"Initial eq input: {initial_eq_input}")
+
+    points=2500
+    x=np.ones((3,points))
+    
+    x_taylor=np.ones((3,points))
+    t_taylor=1850
+    f_a=np.ones((3,1))
+    f_a[:,0]=dynamics.dynamics(x[:,t_taylor], initial_eq_input)[1][0]
+
+    
+    print(np.shape(f_a))   
+    for tt in range(points-1):
+        x[:,tt+1]=dynamics.dynamics(x[:,tt], initial_eq_input)[0]
+        
+        diff=x[:,tt]-x[:,t_taylor]
+    
+        x_taylor[:,tt+1][0]=dynamics.dynamics(x[:,t_taylor], initial_eq_input)[0][0]+f_a.T@diff
+
+
+    # Plotting the entire vector x
+    plt.figure()
+    plt.plot(x[0,:], label='V')
+    plt.plot(x_taylor[0,:], label='V Taylor')
+    plt.xlabel('Time')
+    plt.ylabel('State')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
     V_des_2 = 15.0
     beta_des_2 = 2.0
@@ -76,7 +105,8 @@ if __name__ == "__main__":
         plt.show()
 
     # Application of the newthon method
-    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    xx_star, uu_star = gradient_method(xx_ref, uu_ref)
     # print("xx_star", xx_star.shape)
     # print("uu_star", uu_star.shape)
     # print("xx_ref", xx_ref.shape)

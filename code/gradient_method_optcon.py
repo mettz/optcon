@@ -14,20 +14,20 @@ plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
 #max_iters = int(3e2)
-max_iters = 10
-stepsize_0 = 0.001
+max_iters = 20
+stepsize_0 = 1
 
 # Armijo parametrs
 cc = 0.5
 beta = 0.7
 armijo_maxiters = 20 
 
-term_cond = 1e-3
+term_cond = 1e-6
 
 visu_armijo = True
 
 # Trajectory parameters
-tf = 10  # final time in seconds
+tf = 5  # final time in seconds
 
 dt = dyn.dt  # get discretization step from dynamics
 ns = dyn.number_of_states
@@ -37,11 +37,8 @@ TT = int(tf / dt)  # discrete-time samples
 print("TT", TT)
 
 # Initial guess
-xx_init = np.ones((ns, TT)) # 3x10000
-# xx_init contiene tutta la guess trajectory
-
-print("xx_init", xx_init)
-uu_init = np.ones((ni, TT)) # 2x10000
+xx_init = np.ones((ns, TT)) 
+uu_init = np.ones((ni, TT)) 
 
 #xx_init[:,0] = np.array()
 ######################################
@@ -63,20 +60,13 @@ descent_arm = np.zeros(max_iters)  # collect descent direction
 
 def gradient_method(xx_ref, uu_ref):
     print("Starting the computation of the optimal trajectory...")
-
+    x0 = xx_ref[:,0]
     kk = 0
-    iters = max_iters # 300
 
-    #xx[:, :, 0] = xx_init 
-    #print("xx_ref[:,0]", xx_ref[:,0])
-    xx[:, :, 0] = xx_ref[:,0,None]
-    #uu[:, :, 0] = uu_init
-    #uu_init = uu_ref[:,0, None]
-    uu[:, :, 0] = uu_ref[:,0, None]
+    xx[:,:,0] = xx_init
+    uu[:,:,0] = uu_init
 
-    x0 = xx_ref[:, 0]
-
-    for kk in range(iters - 1): #da 0 a 299
+    for kk in range(max_iters - 1): #da 0 a 299
         JJ[kk] = 0
         # calculate cost
         for tt in range(TT - 1): #da 0 a 9999
@@ -147,11 +137,11 @@ def gradient_method(xx_ref, uu_ref):
                 # update the stepsize
                 stepsize = beta * stepsize
             else:
-                if visu_armijo and kk % 10 == 0:
-                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
-                    print("Armijo stepsize = {:.3e}".format(stepsize))
-                    break
+                print("Armijo stepsize = {:.3e}".format(stepsize))
+                break
 
+        if visu_armijo and kk%10==0:
+            plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
        
         ############################
         # Update the current solution

@@ -90,13 +90,13 @@ def plot_equilibria(equilibrium_point, V_des, beta_des):
 
 
 ########################  Plot of the dynamics  #############################
-def dynamics_plot(delta, Fx):
+def dynamics_plot():
     # Considering constant inputs
-    delta = 45.0
-    Fx = 1.0
+    delta = -4.76767338e-02
+    Fx = 3.89996234e+04
 
     uu = np.array([delta, Fx])
-    xx = np.array([0, 1.0, 0, 5.0, 1.0, 1])
+    xx = np.array([20, 1.0, -1.5476432])
     dyn = np.zeros([100000, 2])
     # dyn: x0 y0
     #      x1 y1
@@ -175,7 +175,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
             label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
         )
 
-        plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+        #plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
 
         plt.grid()
         plt.xlabel("stepsize")

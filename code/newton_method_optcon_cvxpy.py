@@ -24,7 +24,7 @@ descent_arm = np.zeros(max_iters)
 deltau = np.zeros((ni, TT, max_iters))  # Du - descent direction
 dJ = np.zeros((ni, TT, max_iters)) 
 
-Q = np.diag([0.1, 0.1, 0.1])
+Q = np.diag([0.01, 0.1, 0.1])
 R = np.diag([1, 1])
 
 def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
