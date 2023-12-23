@@ -75,8 +75,8 @@ if __name__ == "__main__":
 
     '''Ho importato queste due righe di codice dall'altro branch, probabilmente vanno verificate le dimensioni'''
     # Verification of the equilibrium points
-    plots.verify_equilibria(initial_eq_state, initial_eq_input, V_des_1, beta_des_1)
-    plots.verify_equilibria(final_eq_state, final_eq_input, V_des_2, beta_des_2)
+    #plots.verify_equilibria(initial_eq_state, initial_eq_input, V_des_1, beta_des_1)
+    #plots.verify_equilibria(final_eq_state, final_eq_input, V_des_2, beta_des_2)
 
     # Step reference curve
     xx_ref, uu_ref = step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)

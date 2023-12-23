@@ -2,7 +2,7 @@ import numpy as np
 import dynamics as dyn
 import cost as cst
 
-tf = 5  # final time in seconds
+tf = 10  # final time in seconds
 dt = dyn.dt  # get discretization step from dynamics
 ns = dyn.number_of_states
 ni = dyn.number_of_inputs
@@ -62,8 +62,10 @@ def newton_method_optcon(xx_ref, uu_ref):
         print(f"Iteration {kk}")
         if kk == 0:
             # Initialization of the trajectory at the equilibrium point
-            xx[:, :, kk] = np.tile(xx_ref[:, 0], (TT, 1)).T
-            uu[:, :, kk] = np.tile(uu_ref[:, 0], (TT, 1)).T
+            xx[:, :, kk] = xx_ref
+            xx[:, 0, kk + 1] = xx_ref[:, 0]
+            uu[:, :, kk] = uu_ref
+            delta_x[:, 0, kk] = xx_ref[:, 0]
 
         # Evaluate nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians
         for tt in range(TT):  # da 0 a 9999
@@ -157,7 +159,7 @@ def newton_method_optcon(xx_ref, uu_ref):
         print("delta_x", delta_x[:, :, kk])
         print("sigma_t", sigma_t[:, :, kk])
 
-        stepsize = 0.2
+        stepsize = 0.7
         for tt in range(TT - 1):
             uu[:, tt, kk + 1] = uu[:, tt, kk] + stepsize * delta_u[:, tt, kk]
         print("Input sequence computed \n")

@@ -2,10 +2,10 @@ import dynamics as dyn
 import numpy as np
 
 # Import the dimension of states and inputs
-number_of_states = dyn.number_of_states  # 6
+number_of_states = dyn.number_of_states  # 3
 number_of_inputs = dyn.number_of_inputs  # 2
 
-# QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
+# QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 inputs
 # RRt = 1*np.eye(ni)
 
 # nostro caso: QQt 6x6, RRt 2x2
@@ -14,7 +14,7 @@ number_of_inputs = dyn.number_of_inputs  # 2
 # anche perchè l'equilibrio dipende da queste ultime
 
 # Definition the cost matrices
-QQt = 100 * np.diag([0.01, 0.01, 0.01, 100.0, 100.0, 100.0])
+QQt = 100 * np.diag([0.1, 0.1, 0.1])
 RRt = 0.01 * np.eye(number_of_inputs)
 
 QQT = QQt

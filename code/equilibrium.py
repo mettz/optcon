@@ -13,9 +13,12 @@ def nonlinear_system_discretized(variables, V_des, beta_des):
     Fzr = (mass * g * a) / (a + b)
     '''Queste si possono sicuramente recuperare dal file dynamics.py, tanto sono costanti'''
     
-    # Definition of the lateral forces
-    Fyf = mu * Fzf * (delta - (V * np.sin(beta) + a * psi_dot) / (V * np.cos(beta)))  # mu * Fzf * Bf
-    Fyr = mu * Fzr * (-(V * np.sin(beta) - b * psi_dot) / (V * np.cos(beta)))  # mu * Fzr * Br
+    Bf = delta - (V_des * np.sin(beta_des) + a * psi_dot) / (V_des * np.cos(beta_des))
+    Br = -(V_des * np.sin(beta_des) - b * psi_dot) / (V_des * np.cos(beta_des))
+
+    # Defintion of the lateral forces
+    Fyf = mu * Fzf * Bf
+    Fyr = mu * Fzr * Br
     '''Queste penso si possano recuperare dal file dynamics.py, però sono valori dinamici. Quindi bisogna sincerarsi 
     che in dynamics.py i valori siano aggiornati di pari passo con equilibrium.py'''
 

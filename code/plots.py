@@ -5,8 +5,9 @@ import numpy as np
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
 def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     # Plot the equilibrium points
-    x, y, psi, V_des, beta_des, psi_dot = equilibrium_state
-    xx = np.array([x, y, psi, V_des, beta_des, psi_dot])
+    '''Ho ridotto le dimensioni al volo, poi da sistemare'''
+    V_des, beta_des, psi_dot = equilibrium_state
+    xx = np.array([V_des, beta_des, psi_dot])
     delta, Fx = equilibrium_input
     uu = np.array([delta, Fx])
 
@@ -20,11 +21,9 @@ def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
 
     plt.figure()
     plt.clf()
-    plt.plot(steps, trajectory_xx[:, 0], label="x")
-    plt.plot(steps, trajectory_xx[:, 1], label="y")
-    plt.plot(steps, trajectory_xx[:, 3], label="V")
-    plt.plot(steps, trajectory_xx[:, 4], label="beta")
-    plt.plot(steps, trajectory_xx[:, 5], label="psi_dot")
+    plt.plot(steps, trajectory_xx[:, 0], label="V")
+    plt.plot(steps, trajectory_xx[:, 1], label="beta")
+    plt.plot(steps, trajectory_xx[:, 2], label="psi_dot")
     plt.xlabel("Time")
     plt.ylabel("State variables")
     plt.title("State variables at the equilibrium")
@@ -33,15 +32,15 @@ def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     plt.legend()
     plt.show()
 
-    plt.figure()
-    plt.clf()
-    plt.plot(steps, trajectory_xx[:, 2], label="psi")
-    plt.xlabel("Time")
-    plt.ylabel("State variable: psi")
-    plt.title("State variables at the equilibrium")
-    plt.grid()
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # plt.clf()
+    # plt.plot(steps, trajectory_xx[:, 2], label="psi")
+    # plt.xlabel("Time")
+    # plt.ylabel("State variable: psi")
+    # plt.title("State variables at the equilibrium")
+    # plt.grid()
+    # plt.legend()
+    # plt.show()
 
 
 def plot_equilibria(equilibrium_point, V_des, beta_des):
