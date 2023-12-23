@@ -2,10 +2,11 @@ import dynamics as dyn
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
 def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     # Plot the equilibrium points
-    '''Ho ridotto le dimensioni al volo, poi da sistemare'''
+    """Ho ridotto le dimensioni al volo, poi da sistemare"""
     V_des, beta_des, psi_dot = equilibrium_state
     xx = np.array([V_des, beta_des, psi_dot])
     delta, Fx = equilibrium_input
@@ -15,7 +16,7 @@ def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     trajectory_xx = np.zeros((len(steps), len(xx)))
 
     for i in range(len(steps)):
-        xx_plus = dyn(xx, uu)
+        xx_plus = dyn.dynamics(xx, uu)[0]
         trajectory_xx[i, :] = xx_plus
         xx = xx_plus
 
@@ -90,7 +91,7 @@ def plot_equilibria(equilibrium_point, V_des, beta_des):
 def dynamics_plot():
     # Considering constant inputs
     delta = -4.76767338e-02
-    Fx = 3.89996234e+04
+    Fx = 3.89996234e04
 
     uu = np.array([delta, Fx])
     xx = np.array([20, 1.0, -1.5476432])
@@ -172,7 +173,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
             label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
         )
 
-        #plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+        # plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
 
         plt.grid()
         plt.xlabel("stepsize")
