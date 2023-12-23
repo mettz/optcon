@@ -1,5 +1,5 @@
 import numpy as np
-import dynamics as dyn
+import code.dyn as dyn
 
 number_of_states = dyn.number_of_states  # 6
 number_of_inputs = dyn.number_of_inputs  # 2

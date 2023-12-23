@@ -5,6 +5,7 @@ from equilibrium import find_equilibrium_point, nonlinear_system_discretized
 import newton_method_optcon as nmo
 import cost as cost
 import signal
+import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -16,7 +17,7 @@ if __name__ == "__main__":
     # initial_eq contiene psi_dot, delta e Fx del primo punto di equiilibrio
     # equilibrium point = [x,y,psi,V,beta,psi_dot]
     # equilibrium input = [delta, Fx]
-    x_init_1= 0.0
+    x_init_1 = 0.0
     y_init_1 = 0.0
     psi_init_1 = 0.0
     steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([x_init_1, y_init_1, psi_init_1, V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
@@ -40,6 +41,10 @@ if __name__ == "__main__":
     final_eq_input = np.array([final_eq[1], final_eq[2]])
     print(f"Final eq state: {final_eq_state}")
     print(f"Final eq input: {final_eq_input}")
+
+    # Verification of the equilibrium points
+    plots.verify_equilibria(initial_eq_state, initial_eq_input, V_des_1, beta_des_1)
+    plots.verify_equilibria(final_eq_state, final_eq_input, V_des_2, beta_des_2)
 
     # Initialization of the reference curve
     xx_ref = np.zeros((nmo.ns, nmo.TT))
@@ -86,7 +91,7 @@ if __name__ == "__main__":
     
 
     # Application of the newthon method
-    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    '''xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)'''
     # print("xx_star", xx_star.shape)
     # print("uu_star", uu_star.shape)
     # print("xx_ref", xx_ref.shape)
@@ -139,8 +144,5 @@ if __name__ == "__main__":
     # axs[4].set_xlabel("time")
 
     # plt.show()
-
-    # #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
-    # plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
 
     

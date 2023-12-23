@@ -1,22 +1,21 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import dynamics
+import dynamics as dyn
 
 
-# Debug Luca
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
-def plot_with_equilibria(equilibrium_point, V_des, beta_des):
+def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     # Plot the equilibrium points
-    psi_dot, delta, Fx = equilibrium_point
-    xx = np.array([0, 0, 0, V_des, beta_des, psi_dot])
-    # Devo dare in ingresso anche x, y e psi corrispondenti al punto di equilibrio atrimenti è normale vedere un transitorio iniziale
+    x, y, psi, V_des, beta_des, psi_dot = equilibrium_state
+    xx = np.array([x, y, psi, V_des, beta_des, psi_dot])
+    delta, Fx = equilibrium_input
     uu = np.array([delta, Fx])
 
     steps = np.linspace(0, 100, 100000)
     trajectory_xx = np.zeros((len(steps), len(xx)))
 
     for i in range(len(steps)):
-        xx_plus = dynamics.dynamics(xx, uu)
+        xx_plus = dyn(xx, uu)
         trajectory_xx[i, :] = xx_plus
         xx = xx_plus
 
@@ -52,7 +51,7 @@ def plot_equilibria(equilibrium_point, V_des, beta_des):
     xx = np.array([0, 0, 0, V_des, beta_des, psi_dot])
     uu = np.array([delta, Fx])
 
-    steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, xx, uu)
+    steps, trajectory_xx, trajectory_uu = dyn.trajectory(100, xx, uu)
 
     plt.figure()
     plt.clf()
@@ -105,7 +104,7 @@ def dynamics_plot(delta, Fx):
     # -> dyn: (N,2)
 
     for i in range(100000):
-        xx_plus = dynamics(xx, uu)
+        xx_plus = dyn(xx, uu)
         dyn[i, 0] = xx_plus[0]
         dyn[i, 1] = xx_plus[1]
         xx = xx_plus

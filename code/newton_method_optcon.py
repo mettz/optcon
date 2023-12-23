@@ -1,5 +1,5 @@
 import numpy as np
-import dynamics as dyn
+import code.dyn as dyn
 import cost as cst
 
 tf = 10  # final time in seconds
