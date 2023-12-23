@@ -1,0 +1,8 @@
+23/12/2023
+- Verificare se le derivate sono corrette -> eseguire plots per dimostrarlo e mantenerli nel codice
+- Modificare calcolo degli equilibri -> trovare punti più semplici (far compiere lo step ad una sola variabile di stato) e provare ad 						imporre psi_dot
+- Implementare Armijo -> utilizzare il codice del prof e farlo funzionare nella nostra soluzione
+- Implementare la versione closed loop del Newton's method
+- Verificare la correttezza di Newton's method con la step reference curve
+- Verificare la correttezza di Newton's method con la smooth reference curve
+- Implmentare curva di riferimento più complessa, come ad esempio chicane (ipotesi di Luca: se tutto il resto funziona si potrebbe provare 		anche una traiettoria circolare percorsa per metà tempo in una direzione e per la seconda metà nell'altra direzione)

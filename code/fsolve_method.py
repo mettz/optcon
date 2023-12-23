@@ -1,8 +1,9 @@
-from scipy.optimize import fsolve
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-# Definition of parameters
+from scipy.optimize import fsolve
+
+# Definition of the parameters
 mass = 1480  # Kg
 Iz = 1950  # Kgm^2
 a = 1.421  # m
@@ -10,13 +11,15 @@ b = 1.029  # m
 mu = 1  # nodim
 g = 9.81  # m/s^2
 
-# Definition of discretization step
+# Definition of the discretization step
 dt = 1e-3
 
-def nonlinear_system_discretized(variables):
+def discretized_nonlinear_system(variables):
+    '''Function that defines the discretized nonlinear system of equations to find the equilibrium point'''
     # We impose beta and V to compute the equilibrium point
     beta = 20.0
     V = 1.0
+    '''SFORNI HA DETTO CHE È MEGLIO IMPORRE PSI_DOT !!!'''
 
     # Define your nonlinear system of equations with inputs
     _, _, psi, psi_dot, delta, Fx = variables
@@ -96,7 +99,7 @@ def find_equilibrium_point(f):
     # 0 = dt * (V * np.cos(beta) * np.cos(psi) - V * np.sin(beta) * np.sin(psi))=r(x)
 
 if __name__ == "__main__":
-    equilibrium_point_discretized = find_equilibrium_point(nonlinear_system_discretized)
+    equilibrium_point_discretized = find_equilibrium_point(discretized_nonlinear_system)
     print("Equilibrium Point Discretized: ", equilibrium_point_discretized)
 
     equilibrium_point_continuos = find_equilibrium_point(nonlinear_system_continuos)

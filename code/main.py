@@ -1,14 +1,19 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import dynamics
-from equilibrium import find_equilibrium_point, nonlinear_system_discretized
-import newton_method_optcon_cvxpy as nmo
-from gradient_method_optcon import gradient_method
 import cost as cost
+import dynamics
+import matplotlib.pyplot as plt
+import newton_method_optcon_cvxpy as nmo
+import numpy as np
+import plots
 import signal
+
+from equilibrium import find_equilibrium_point, nonlinear_system_discretized
+from gradient_method_optcon import gradient_method
 from reference_trajectories import smooth_trajectory, step_trajectory
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+# Definition of flags that enable or disable the plots
+see_reference_curve_plots = False
 
 if __name__ == "__main__":
     V_des_1 = 20.0
@@ -18,9 +23,6 @@ if __name__ == "__main__":
     # initial_eq contiene psi_dot, delta e Fx del primo punto di equiilibrio
     # equilibrium point = [x,y,psi,V,beta,psi_dot]
     # equilibrium input = [delta, Fx]
-    x_init_1 = 0.0
-    y_init_1 = 0.0
-    psi_init_1 = 0.0
     steps, trajectory_xx, trajectory_uu = dynamics.trajectory(100, np.array([V_des_1, beta_des_1, initial_eq[0]]), np.array([initial_eq[1], initial_eq[2]]))
     last_index = len(trajectory_xx) - 1
     """print(f"Last index: {last_index}")
@@ -30,22 +32,22 @@ if __name__ == "__main__":
     print(f"Initial eq state: {initial_eq_state}")
     print(f"Initial eq input: {initial_eq_input}")
 
-    points=2500
-    x=np.ones((3,points))
+    points = 2500
+    x = np.ones((3,points))
     
-    x_taylor=np.ones((3,points))
-    t_taylor=1850
-    f_a=np.ones((3,1))
-    f_a[:,0]=dynamics.dynamics(x[:,t_taylor], initial_eq_input)[1][0]
+    x_taylor = np.ones((3,points))
+    t_taylor = 1850
+    f_a = np.ones((3,1))
+    f_a[:,0] = dynamics.dynamics(x[:,t_taylor], initial_eq_input)[1][0]
 
     
     print(np.shape(f_a))   
     for tt in range(points-1):
-        x[:,tt+1]=dynamics.dynamics(x[:,tt], initial_eq_input)[0]
+        x[:,tt+1] = dynamics.dynamics(x[:,tt], initial_eq_input)[0]
         
-        diff=x[:,tt]-x[:,t_taylor]
+        diff = x[:,tt]-x[:,t_taylor]
     
-        x_taylor[:,tt+1][0]=dynamics.dynamics(x[:,t_taylor], initial_eq_input)[0][0]+f_a.T@diff
+        x_taylor[:,tt+1][0] = dynamics.dynamics(x[:,t_taylor], initial_eq_input)[0][0]+f_a.T@diff
 
 
     # Plotting the entire vector x
@@ -71,8 +73,14 @@ if __name__ == "__main__":
     print(f"Final eq state: {final_eq_state}")
     print(f"Final eq input: {final_eq_input}")
 
-    # Reference curve
+    '''Ho importato queste due righe di codice dall'altro branch, probabilmente vanno verificate le dimensioni'''
+    # Verification of the equilibrium points
+    plots.verify_equilibria(initial_eq_state, initial_eq_input, V_des_1, beta_des_1)
+    plots.verify_equilibria(final_eq_state, final_eq_input, V_des_2, beta_des_2)
+
+    # Step reference curve
     xx_ref, uu_ref = step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
+    # Smooth reference curve
     #xx_ref, uu_ref = smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input)
 
     # Plot of the reference curve
@@ -82,7 +90,6 @@ if __name__ == "__main__":
     states = ["V", "beta", "psi_dot"]
     inputs = ["delta", "Fx"]
 
-    see_reference_curve_plots = False
     if see_reference_curve_plots:
         plt.figure(figsize=(10, 10))
         plt.clf()
@@ -171,6 +178,3 @@ if __name__ == "__main__":
     # axs[4].set_xlabel("time")
 
     # plt.show()
-
-    # #plots.gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)
-    # plots.gradient_method_plots(reference_curve_states, reference_curve_inputs, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns)

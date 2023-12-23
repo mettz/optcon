@@ -1,7 +1,8 @@
-import numpy as np
 import dynamics as dyn
+import numpy as np
 
-number_of_states = dyn.number_of_states  # 3
+# Import the dimension of states and inputs
+number_of_states = dyn.number_of_states  # 6
 number_of_inputs = dyn.number_of_inputs  # 2
 
 # QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 input
@@ -12,8 +13,9 @@ number_of_inputs = dyn.number_of_inputs  # 2
 # Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
 # anche perchè l'equilibrio dipende da queste ultime
 
-QQt = np.diag([0.1, 0.1, 0.1])
-RRt = np.diag([1, 1])
+# Definition the cost matrices
+QQt = 100 * np.diag([0.01, 0.01, 0.01, 100.0, 100.0, 100.0])
+RRt = 0.01 * np.eye(number_of_inputs)
 
 QQT = QQt
 

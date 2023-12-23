@@ -1,12 +1,15 @@
-import numpy as np
-from scipy.interpolate import CubicSpline
 import matplotlib.pyplot as plt
-from newton_method_optcon_cvxpy import TT, ni, ns
+import numpy as np
 
+from newton_method_optcon_cvxpy import TT, ni, ns
+from scipy.interpolate import CubicSpline
+
+# Initialization of the reference curves
 xx_ref = np.zeros((ns, TT))
 uu_ref = np.zeros((ni, TT))
   
 def step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input):
+    '''Function that creates a step reference curve using two equilibrium points'''
    # Initialization of the reference curve
     xx_ref = np.zeros((ns, TT))
     uu_ref = np.zeros((ni, TT))
@@ -22,13 +25,11 @@ def step_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq
     return xx_ref, uu_ref
 
 def smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_eq_input):
-
-    final_time=3
+    '''Function that creates a smooth reference curve using two equilibrium points'''
+    final_time = 3
     x = np.array([0, final_time])
     for i in range(ns):
-        
         # Given points
-  
         y = initial_eq_state[i], final_eq_state[i]
 
         # Interpolate using CubicSpline
@@ -42,9 +43,7 @@ def smooth_trajectory(initial_eq_state, initial_eq_input, final_eq_state, final_
         xx_ref_2 = np.tile(final_eq_state[i], (TT//2)-(len(y_interp)//2))
         xx_ref[i,:] = np.concatenate((xx_ref_1,y_interp, xx_ref_2), axis=0)
 
-
     for i in range(ni):
-        
         # Given points
         y = initial_eq_input[i], final_eq_input[i]
 
