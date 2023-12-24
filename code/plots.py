@@ -1,12 +1,12 @@
-import dynamics as dyn
 import matplotlib.pyplot as plt
 import numpy as np
 
+import constants
+import dynamics as dyn
 
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
 def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
-    # Plot the equilibrium points
-    """Ho ridotto le dimensioni al volo, poi da sistemare"""
+    # Plot of the system dynamics starting by the equilibrium points
     V_des, beta_des, psi_dot = equilibrium_state
     xx = np.array([V_des, beta_des, psi_dot])
     delta, Fx = equilibrium_input
@@ -32,16 +32,6 @@ def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
     plt.grid()
     plt.legend()
     plt.show()
-
-    # plt.figure()
-    # plt.clf()
-    # plt.plot(steps, trajectory_xx[:, 2], label="psi")
-    # plt.xlabel("Time")
-    # plt.ylabel("State variable: psi")
-    # plt.title("State variables at the equilibrium")
-    # plt.grid()
-    # plt.legend()
-    # plt.show()
 
 
 def plot_equilibria(equilibrium_point, V_des, beta_des):
@@ -88,24 +78,26 @@ def plot_equilibria(equilibrium_point, V_des, beta_des):
 
 
 ########################  Plot of the dynamics  #############################
-def dynamics_plot():
+def dynamics_plot(xx_init, uu):
     # Considering constant inputs
-    delta = -4.76767338e-02
-    Fx = 3.89996234e04
+    delta, Fx = uu
+    V_init, beta_init, psi_dot_init = xx_init
 
     uu = np.array([delta, Fx])
-    xx = np.array([20, 1.0, -1.5476432])
-    dyn = np.zeros([100000, 2])
+    xx = np.array([V_init, beta_init, psi_dot_init])
+
+    steps = 10000
+    xx_yy = np.zeros([steps, 2])
     # dyn: x0 y0
     #      x1 y1
     #      .. ..
     #      xN yN
     # -> dyn: (N,2)
 
-    for i in range(100000):
+    for i in range(steps):
         xx_plus = dyn(xx, uu)
-        dyn[i, 0] = xx_plus[0]
-        dyn[i, 1] = xx_plus[1]
+        xx_yy[i, 0] = xx_plus[0]
+        xx_yy[i, 1] = xx_plus[1]
         xx = xx_plus
 
     plt.figure()
@@ -117,7 +109,29 @@ def dynamics_plot():
     plt.grid()
     plt.show()
 
+################# Plot of the derivatives over the trajectory #################
+def derivatives_plot(xx_traj, uu_traj):
+    LinPoint = int (constants.TT / 2)
+    xx_plus = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+    gradient_taylor_timed = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+    fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
+    xx_plus_taylor = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+    fu = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants.TT))
+    
+    for time in range(constants.TT):
+        xx_plus[:, time], fx[:, :, time], fu[:, :, time] = dyn.dynamics(xx_traj[:, time], uu_traj[:, time])
 
+    for time in range(constants.TT):
+        gradient_taylor_timed[:, time] = xx_plus[:, time] + fx[:, :, time].T @ (xx_plus[:, time] + - xx_plus[:, LinPoint])
+        xx_plus_taylor[:, time] = xx_traj[:, LinPoint] + (time - float(LinPoint)) * (xx_plus[:, LinPoint] - xx_traj[:, LinPoint])
+    
+    span = np.linspace((LinPoint - 10), (LinPoint + 10), 20)
+
+    fig, axs = plt.subplots(constants.NUMBER_OF_STATES, 1, sharex=True, figsize=(10, 6))
+    for idx in range(constants.NUMBER_OF_STATES):
+        axs[idx].plot(span, xx_plus_taylor[idx, (LinPoint-10):(LinPoint+10)],'k', label=f'taylor_x{idx} in {LinPoint}')
+        axs[idx].plot(range(constants.TT), xx_traj[idx, :], 'r--', label=f'x{idx}')
+    plt.show()
 ############################
 # Gradient method plots
 ############################

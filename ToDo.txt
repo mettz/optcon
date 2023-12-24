@@ -6,3 +6,7 @@
 - Verificare la correttezza di Newton's method con la step reference curve
 - Verificare la correttezza di Newton's method con la smooth reference curve
 - Implmentare curva di riferimento più complessa, come ad esempio chicane (ipotesi di Luca: se tutto il resto funziona si potrebbe provare 		anche una traiettoria circolare percorsa per metà tempo in una direzione e per la seconda metà nell'altra direzione)
+
+Commenti:
+- Secondo Luca è necessario mantenere le equazioni di x, y e psi. Per calcolare l'intera dinamica e plottarla servono. Non so se a questo punto ha senso toccare il file dynaimcs, 
+ma bisogna trovare una soluzione. O creiamo un file doppione coi 6 stati, ma per certe cose serve.
