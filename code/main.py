@@ -9,6 +9,7 @@ import dynamics as dyn
 import equilibrium as eq
 import gradient_method_optcon as gmo
 import newton_method_optcon as nmo
+import newton_method_optcon_cvxpy as nmo_cvxpy
 import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -73,12 +74,14 @@ def main(args):
         plots.derivatives_plot(xx_traj, uu_traj)
 
     # Application of the newthon method
-    #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
-    xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
-    print("xx_star", xx_star.shape)
-    print("uu_star", uu_star.shape)
-    print("xx_ref", xx_ref.shape)
-    print("uu_ref", uu_ref.shape)
+    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    #xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
+    #xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
+
+    # print("xx_star", xx_star.shape)
+    # print("uu_star", uu_star.shape)
+    # print("xx_ref", xx_ref.shape)
+    # print("uu_ref", uu_ref.shape)
 
     tt_hor = np.linspace(0, constants.TF, constants.TT)
     plt.figure()

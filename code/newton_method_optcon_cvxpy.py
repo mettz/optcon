@@ -14,7 +14,7 @@ armijo_maxiters = 20
 cc = 0.5
 beta = 0.7
 
-visu_armijo = False
+visu_armijo = True
 JJ = np.zeros((max_iters, 1))
 lmbd = np.zeros((constants.NUMBER_OF_STATES, constants.TT, max_iters))  # lambdas - costate seq.
 descent_arm = np.zeros(max_iters)
@@ -53,8 +53,8 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
         temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
         JJ_temp += temp_cost
 
-        #stepsizes.append(stepsize)  # save the stepsize
-        #costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
+        stepsizes.append(stepsize)  # save the stepsize
+        costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
 
         if JJ_temp > JJ[kk] + cc * stepsize * descent_arm:
             # update the stepsize
@@ -128,7 +128,7 @@ def newton_method_optcon(xx_ref, uu_ref):
             descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #Calcolarla quando si ha la direzione di discesa
 
         # Definition of the decision variables (with the state augmentated)
-        delta_x = cp.Variable((constants.NUMBER_OF_STATES, constants.TT))  # chat gpt: TT + 1
+        delta_x = cp.Variable((constants.NUMBER_OF_STATES, constants.TT+1))  # chat gpt: TT + 1
         delta_u = cp.Variable((constants.NUMBER_OF_INPUTS, constants.TT))
 
         # Definition of the objective function (= cost function)

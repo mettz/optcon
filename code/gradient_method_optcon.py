@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d # used for 3D plot
 import numpy as np
 import signal
 
@@ -51,31 +52,27 @@ def gradient_method(xx_ref, uu_ref):
     kk = 0
     iters = max_iters # 10
 
-    #xx[:, :, 0] = xx_init 
-    #print("xx_ref[:,0]", xx_ref[:,0])
+    # Initialization of the trajectory to the initial equilibrium point
     xx[:, :, 0] = xx_ref[:,0,None]
-    #uu[:, :, 0] = uu_init
-    #uu_init = uu_ref[:,0, None]
     uu[:, :, 0] = uu_ref[:,0, None]
 
     x0 = xx_ref[:, 0]
 
-    for kk in range(iters - 1): #da 0 a 299
-        JJ[kk] = 0
-        # calculate cost
-        for tt in range(constants.TT - 1): #da 0 a 9999
+    for kk in range(iters - 1): 
+        JJ[kk] = 0  # Cost initialization
+
+        # Computation of the cost
+        for tt in range(constants.TT-1): 
             temp_cost = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ[kk] += temp_cost
 
         temp_cost = cst.termcost(xx[:, -1, kk], xx_ref[:, -1])[0]
         JJ[kk] += temp_cost
         
-        # Descent direction calculation
-
         lmbd_temp = cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[1]
         lmbd[:, constants.TT - 1, kk] = lmbd_temp.squeeze()
 
-        for tt in reversed(range(constants.TT - 1)):  # integration backward in time
+        for tt in reversed(range(constants.TT-1)):  # integration backward in time
             at, bt = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1:]
             fx, fu = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1:]
 
@@ -85,6 +82,8 @@ def gradient_method(xx_ref, uu_ref):
             lmbd_temp = At.T @ lmbd[:, tt + 1, kk][:, None] + at  # costate equation
             dJ_temp = Bt.T @ lmbd[:, tt + 1, kk][:, None] + bt  # gradient of J wrt u
             deltau_temp = -dJ_temp
+
+            print("deltau_temp", deltau_temp)
 
             lmbd[:, tt, kk] = lmbd_temp.squeeze()
             dJ[:, tt, kk] = dJ_temp.squeeze()

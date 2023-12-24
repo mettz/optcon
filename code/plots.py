@@ -111,7 +111,7 @@ def dynamics_plot(xx_init, uu):
 
 ################# Plot of the derivatives over the trajectory #################
 def derivatives_plot(xx_traj, uu_traj):
-    LinPoint = int (constants.TT / 8)
+    LinPoint = int (constants.TT / 20)
     xx_plus = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     gradient_taylor_timed = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
@@ -178,7 +178,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
             color="r",
             label="$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
         )
-        # plt.plot(steps, JJ[kk] - descent[kk]*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
+        plt.plot(steps, JJ[kk] - descent[kk]*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
         plt.plot(
             steps,
             JJ[kk] + cc * descent_arm[kk] * steps,
@@ -187,7 +187,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
             label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
         )
 
-        # plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+        plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
 
         plt.grid()
         plt.xlabel("stepsize")
