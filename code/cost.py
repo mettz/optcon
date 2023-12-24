@@ -1,9 +1,11 @@
-import dynamics as dyn
 import numpy as np
 
+import constants
+import dynamics as dyn
+
 # Import the dimension of states and inputs
-number_of_states = dyn.number_of_states  # 3
-number_of_inputs = dyn.number_of_inputs  # 2
+number_of_states = constants.NUMBER_OF_STATES 
+number_of_inputs = constants.NUMBER_OF_INPUTS 
 
 # QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 inputs
 # RRt = 1*np.eye(ni)

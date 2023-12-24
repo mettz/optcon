@@ -111,7 +111,7 @@ def dynamics_plot(xx_init, uu):
 
 ################# Plot of the derivatives over the trajectory #################
 def derivatives_plot(xx_traj, uu_traj):
-    LinPoint = int (constants.TT / 2)
+    LinPoint = int (constants.TT / 8)
     xx_plus = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     gradient_taylor_timed = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
@@ -125,7 +125,7 @@ def derivatives_plot(xx_traj, uu_traj):
         gradient_taylor_timed[:, time] = xx_plus[:, time] + fx[:, :, time].T @ (xx_plus[:, time] + - xx_plus[:, LinPoint])
         xx_plus_taylor[:, time] = xx_traj[:, LinPoint] + (time - float(LinPoint)) * (xx_plus[:, LinPoint] - xx_traj[:, LinPoint])
     
-    span = np.linspace((LinPoint - 10), (LinPoint + 10), 20)
+    span = np.linspace((LinPoint - 10), (LinPoint +10), 20)
 
     fig, axs = plt.subplots(constants.NUMBER_OF_STATES, 1, sharex=True, figsize=(10, 6))
     for idx in range(constants.NUMBER_OF_STATES):

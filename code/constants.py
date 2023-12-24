@@ -1,14 +1,16 @@
-# discretization step
+# Discretization step
 DT = 0.01
 
-# final time of the trajectory
+# Final time of the trajectory
 TF = 5
 
-# number of time steps
+# Number of time steps
 TT = int(TF / DT)
 
+# State and input variables
 STATES = ["V", "beta", "psi_dot"]
 INPUTS = ["delta", "Fx"]
 
+# Number of states and inputs
 NUMBER_OF_STATES = len(STATES)
 NUMBER_OF_INPUTS = len(INPUTS)

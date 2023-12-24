@@ -2,6 +2,7 @@ import numpy as np
 
 from constants import DT, NUMBER_OF_STATES
 
+# Definition of the vehicle parameters
 mass = 1480  # Kg
 Iz = 1950  # Kgm^2
 a = 1.421  # m

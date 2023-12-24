@@ -1,11 +1,11 @@
-import numpy as np
 import matplotlib.pyplot as plt
-import dynamics as dyn
-import cost as cst
-
-import plots
-
+import numpy as np
 import signal
+
+import constants
+import cost as cst
+import dynamics as dyn
+import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -13,59 +13,43 @@ plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
-#max_iters = int(3e2)
 max_iters = 10
 stepsize_0 = 0.001
 
-# Armijo parametrs
+#Armijo parametrs
 cc = 0.5
 beta = 0.7
 armijo_maxiters = 20 
-
 term_cond = 1e-3
-
 visu_armijo = True
 
-# Trajectory parameters
-tf = 10  # final time in seconds
-
-dt = dyn.dt  # get discretization step from dynamics
-ns = dyn.number_of_states
-ni = dyn.number_of_inputs
-
-TT = int(tf / dt)  # discrete-time samples
-print("TT", TT)
-
 # Initial guess
-xx_init = np.ones((ns, TT)) # 3x10000
-# xx_init contiene tutta la guess trajectory
+xx_init = np.ones((constants.NUMBER_OF_STATES, constants.TT))
+uu_init = np.ones((constants.NUMBER_OF_INPUTS, constants.TT)) 
 
-print("xx_init", xx_init)
-uu_init = np.ones((ni, TT)) # 2x10000
+# State and input sequences
+xx = np.zeros((constants.NUMBER_OF_STATES, constants.TT, max_iters))
+uu = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT, max_iters))
 
-#xx_init[:,0] = np.array()
-######################################
-# Arrays to store data
-######################################
+# Lambda - costate sequence
+lmbd = np.zeros((constants.NUMBER_OF_STATES, constants.TT, max_iters))  
 
-xx = np.zeros((ns, TT, max_iters))  # state seq.
-uu = np.zeros((ni, TT, max_iters))  # input seq.
+# Du - descent direction
+deltau = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT, max_iters))
 
-lmbd = np.zeros((ns, TT, max_iters))  # lambdas - costate seq.
+# DJ - gradient of J wrt u
+dJ = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT, max_iters)) 
 
-deltau = np.zeros((ni, TT, max_iters))  # Du - descent direction
-dJ = np.zeros((ni, TT, max_iters))  # DJ - gradient of J wrt u
-
-JJ = np.zeros(max_iters)  # collect cost
-descent = np.zeros(max_iters)  # collect descent direction
-descent_arm = np.zeros(max_iters)  # collect descent direction
-
+# Cost and descent
+JJ = np.zeros(max_iters) 
+descent = np.zeros(max_iters)
+descent_arm = np.zeros(max_iters)  
 
 def gradient_method(xx_ref, uu_ref):
     print("Starting the computation of the optimal trajectory...")
 
     kk = 0
-    iters = max_iters # 300
+    iters = max_iters # 10
 
     #xx[:, :, 0] = xx_init 
     #print("xx_ref[:,0]", xx_ref[:,0])
@@ -79,7 +63,7 @@ def gradient_method(xx_ref, uu_ref):
     for kk in range(iters - 1): #da 0 a 299
         JJ[kk] = 0
         # calculate cost
-        for tt in range(TT - 1): #da 0 a 9999
+        for tt in range(constants.TT - 1): #da 0 a 9999
             temp_cost = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ[kk] += temp_cost
 
@@ -88,10 +72,10 @@ def gradient_method(xx_ref, uu_ref):
         
         # Descent direction calculation
 
-        lmbd_temp = cst.termcost(xx[:, TT - 1, kk], xx_ref[:, TT - 1])[1]
-        lmbd[:, TT - 1, kk] = lmbd_temp.squeeze()
+        lmbd_temp = cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[1]
+        lmbd[:, constants.TT - 1, kk] = lmbd_temp.squeeze()
 
-        for tt in reversed(range(TT - 1)):  # integration backward in time
+        for tt in reversed(range(constants.TT - 1)):  # integration backward in time
             at, bt = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1:]
             fx, fu = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1:]
 
@@ -121,19 +105,19 @@ def gradient_method(xx_ref, uu_ref):
         for ii in range(armijo_maxiters):
             # temp solution update
 
-            xx_temp = np.zeros((ns, TT))
-            uu_temp = np.zeros((ni, TT))
+            xx_temp = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+            uu_temp = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
             xx_temp[:, 0] = x0
 
-            for tt in range(TT - 1):
+            for tt in range(constants.TT - 1):
                 uu_temp[:, tt] = uu[:, tt, kk] + stepsize * deltau[:, tt, kk]
                 xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 
             # temp cost calculation
             JJ_temp = 0
 
-            for tt in range(TT - 1):
+            for tt in range(constants.TT - 1):
                 temp_cost = cst.stagecost(xx_temp[:, tt], uu_temp[:, tt], xx_ref[:, tt], uu_ref[:, tt])[0]
                 JJ_temp += temp_cost
 
@@ -148,7 +132,7 @@ def gradient_method(xx_ref, uu_ref):
                 stepsize = beta * stepsize
             else:
                 if visu_armijo and kk % 10 == 0:
-                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
                     print("Armijo stepsize = {:.3e}".format(stepsize))
                     break
 
@@ -159,12 +143,12 @@ def gradient_method(xx_ref, uu_ref):
         
         # stepsize = 0.01 #Constant stepsize
 
-        xx_temp = np.zeros((ns, TT))
-        uu_temp = np.zeros((ni, TT))
+        xx_temp = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+        uu_temp = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
         xx_temp[:, 0] = x0
 
-        for tt in range(TT - 1):
+        for tt in range(constants.TT - 1):
             uu_temp[:, tt] = uu[:, tt, kk] + stepsize * deltau[:, tt, kk]
             xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 

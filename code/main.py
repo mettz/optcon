@@ -7,6 +7,8 @@ import constants
 import curves
 import dynamics as dyn
 import equilibrium as eq
+import gradient_method_optcon as gmo
+import newton_method_optcon as nmo
 import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -68,8 +70,41 @@ def main(args):
         for i in range(constants.TT-1): 
             xx_plus = dyn.dynamics(xx_traj[:,i], uu_traj[:,i])[0]
             xx_traj[:, i+1] = xx_plus
-        plots.derivatives_plot(xx_traj, uu_traj) 
-    
+        plots.derivatives_plot(xx_traj, uu_traj)
+
+    # Application of the newthon method
+    #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
+    print("xx_star", xx_star.shape)
+    print("uu_star", uu_star.shape)
+    print("xx_ref", xx_ref.shape)
+    print("uu_ref", uu_ref.shape)
+
+    tt_hor = np.linspace(0, constants.TF, constants.TT)
+    plt.figure()
+    plt.clf()
+    plt.title("Trajectory following")
+    for i in range(constants.NUMBER_OF_STATES):
+        plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
+        plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+        plt.plot(tt_hor, xx_star[i, :], label=f"State {constants.STATES[i]}")
+
+        plt.grid()
+        plt.legend()
+    plt.show()
+
+    tt_hor = np.linspace(0, constants.TF, constants.TT)
+    plt.figure()
+    plt.clf()
+    plt.title("Trajectory following inputs")
+    for i in range(constants.NUMBER_OF_INPUTS):
+        plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
+        plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+        plt.plot(tt_hor, uu_star[i, :], label=f"State {constants.INPUTS[i]}")
+
+        plt.grid()
+        plt.legend()
+    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")
@@ -92,31 +127,7 @@ if __name__ == "__main__":
     # # print("xx_ref", xx_ref.shape)
     # # print("uu_ref", uu_ref.shape)
 
-    # tt_hor = np.linspace(0, nmo.tf, nmo.TT)
-    # plt.figure()
-    # plt.clf()
-    # plt.title("Trajectory following")
-    # for i in range(np.size(states)):
-    #     plt.subplot(3, 1, 1 + i)
-    #     plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {states[i]}")
-    #     plt.plot(tt_hor, xx_star[i, :], label=f"State {states[i]}")
-
-    #     plt.grid()
-    #     plt.legend()
-    # plt.show()
-
-    # tt_hor = np.linspace(0, nmo.tf, nmo.TT)
-    # plt.figure()
-    # plt.clf()
-    # plt.title("Trajectory following inputs")
-    # for i in range(np.size(inputs)):
-    #     plt.subplot(2, 1, 1 + i)
-    #     plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {inputs[i]}")
-    #     plt.plot(tt_hor, uu_star[i, :], label=f"State {inputs[i]}")
-
-    #     plt.grid()
-    #     plt.legend()
-    # plt.show()
+    
 
     # # fig, axs = plt.subplots(nmo.ns + nmo.ni, 1, sharex="all")
 
