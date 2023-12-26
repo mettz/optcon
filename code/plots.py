@@ -132,12 +132,15 @@ def derivatives_plot(xx_traj, uu_traj):
         axs[idx].plot(span, xx_plus_taylor[idx, (LinPoint-10):(LinPoint+10)],'k', label=f'taylor_x{idx} in {LinPoint}')
         axs[idx].plot(range(constants.TT), xx_traj[idx, :], 'r--', label=f'x{idx}')
     plt.show()
+    
 ############################
 # Gradient method plots
 ############################
+    
 def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
     ############################
     # Armijo plot
+    #UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
     ############################
     steps = np.linspace(0, stepsize_0, int(2e1))
     costs = np.zeros(len(steps))
@@ -153,7 +156,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
         xx_temp[:, 0] = x0
 
         for tt in range(TT - 1):
-            uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt, kk]
+            uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt] #prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
             xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 
         # temp cost calculation
@@ -168,33 +171,29 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
 
         costs[ii] = np.min([JJ_temp, 100 * JJ[kk]])
 
-        plt.figure(1)
-        plt.clf()
+    plt.figure(1)
+    plt.clf()
 
-        plt.plot(steps, costs, color="g", label="$J(\\mathbf{u}^k - stepsize*d^k)$")
-        plt.plot(
-            steps,
-            JJ[kk] + descent_arm[kk] * steps,
-            color="r",
-            label="$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
-        )
-        plt.plot(steps, JJ[kk] - descent[kk]*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
-        plt.plot(
-            steps,
-            JJ[kk] + cc * descent_arm[kk] * steps,
-            color="g",
-            linestyle="dashed",
-            label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
-        )
+    plt.plot(steps, costs, color="g", label="$J(\\mathbf{u}^k - stepsize*d^k)$")
 
-        plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+    plt.plot(steps, JJ[kk] + descent_arm*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
 
-        plt.grid()
-        plt.xlabel("stepsize")
-        plt.legend()
-        plt.draw()
+    plt.plot(
+        steps,
+        JJ[kk] + cc * descent_arm * steps,
+        color="g",
+        linestyle="dashed",
+        label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
+    )
 
-        plt.show()
+    plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+
+    plt.grid()
+    plt.xlabel("stepsize")
+    plt.legend()
+    plt.draw()
+
+    plt.show()
 
 
 def gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns):

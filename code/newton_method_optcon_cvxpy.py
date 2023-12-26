@@ -7,7 +7,7 @@ import cost as cst
 import dynamics as dyn
 import plots as plots
 
-max_iters = 10
+max_iters = 20
 
 # Definition of the Armijo parameters
 armijo_maxiters = 20
@@ -15,14 +15,14 @@ cc = 0.5
 beta = 0.7
 
 visu_armijo = True
-JJ = np.zeros((max_iters, 1))
+JJ = np.zeros(max_iters)
 lmbd = np.zeros((constants.NUMBER_OF_STATES, constants.TT, max_iters))  # lambdas - costate seq.
 descent_arm = np.zeros(max_iters)
 deltau = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT, max_iters))  # Du - descent direction
 dJ = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT, max_iters)) 
 
-Q = np.diag([0.01, 0.1, 0.1])
-R = np.diag([1, 1])
+Q = cst.QQt
+R = cst.RRt
 
 def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
     stepsizes = []  # list of stepsizes
@@ -60,12 +60,25 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
             # update the stepsize
             stepsize = beta * stepsize
             print("Armijo temp stepsize = {:.3e}".format(stepsize))
+
+            if ii == armijo_maxiters-1:
+                print("Armijo stepsize = {:.3e}".format(stepsize))
+                if visu_armijo and kk % 10 == 0:
+                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
+                
+                return stepsize
+            
         else:
+            print("Armijo stepsize = {:.3e}".format(stepsize))
+            
             if visu_armijo and kk % 10 == 0:
                 plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
-                print("Armijo stepsize = {:.3e}".format(stepsize))
-                break
-
+                
+            return stepsize
+        
+    
+        
+  
 
 def newton_method_optcon(xx_ref, uu_ref):
     print("Newton method starting...")  # For debugging purposes
@@ -125,7 +138,7 @@ def newton_method_optcon(xx_ref, uu_ref):
             dJ[:, tt, kk] = dJ_temp.squeeze()
             deltau[:, tt, kk] = deltau_temp.squeeze()
 
-            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #Calcolarla quando si ha la direzione di discesa
+            #descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #Calcolarla quando si ha la direzione di discesa
 
         # Definition of the decision variables (with the state augmentated)
         delta_x = cp.Variable((constants.NUMBER_OF_STATES, constants.TT+1))  # chat gpt: TT + 1
@@ -166,19 +179,41 @@ def newton_method_optcon(xx_ref, uu_ref):
         # Achievement of the optimal values
         delta_u_star = delta_u.value
 
+        #UPDATE: ho visto dai plot di Armijo che la retta non era tangente al costo. A quel punto ho capito cosa intendeva Sforni con 
+        # "calcolate descent_armijo quando avete la direzione di discesa". Quindi l'ho calcolata qui dopo aver ottenuto delta_u_star.
+        # ora la retta è costante, però nei plot di Armijo continua ad esserci un comportamento strano.
+        for tt in range(constants.TT - 1):
+            descent_arm[kk] += dJ[:, tt, kk].T @ delta_u_star[:,tt]
+
         # STEP 2: Computation of the input sequence
-        #stepsize = armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u_star, kk, descent_arm[kk])
-        stepsize = 0.2
-        for tt in range(constants.TT - 1):
-            uu[:, tt, kk + 1] = uu[:, tt, kk] + stepsize * delta_u_star[:, tt]
+        stepsize = armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u_star, kk, descent_arm[kk])
+        #stepsize = 0.2
 
-        # STEP 3: Computation of the state sequence
-        xx[:, 0, kk + 1] = xx_ref[:, 0]
-        for tt in range(constants.TT - 1):
-            xx[:, tt + 1, kk + 1] = dyn.dynamics(xx[:, tt, kk + 1], uu[:, tt, kk + 1])[0]
+        ############################
+        # Update the current solution
+        ############################
 
-    xx_star = xx[:, :, max_iters - 1]
-    uu_star = uu[:, :, max_iters - 1]
-    uu_star[:, -1] = uu_star[:, -2]  # for plotting purposes
+
+        xx_temp = np.zeros((constants.NUMBER_OF_STATES,constants.TT))
+        uu_temp = np.zeros((constants.NUMBER_OF_INPUTS,constants.TT))
+
+        xx_temp[:,0] = xx_ref[:,0]
+
+        for tt in range(constants.TT-1):
+            uu_temp[:,tt] = uu[:,tt,kk] + stepsize*delta_u_star[:,tt]
+            xx_temp[:,tt+1] = dyn.dynamics(xx_temp[:,tt], uu_temp[:,tt])[0]
+
+        xx[:,:,kk+1] = xx_temp
+        uu[:,:,kk+1] = uu_temp
+
+        ############################
+        # Termination condition
+        ############################
+
+        print('Cost = {:.3e}'.format(JJ[kk]))
+
+        xx_star = xx[:,:,max_iters-1]
+        uu_star = uu[:,:,max_iters-1]
+        uu_star[:,-1] = uu_star[:,-2] # for plotting purposes
 
     return xx_star, uu_star

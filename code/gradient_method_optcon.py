@@ -14,7 +14,7 @@ plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
-max_iters = 10
+max_iters = 40
 stepsize_0 = 0.001
 
 #Armijo parametrs
@@ -83,7 +83,6 @@ def gradient_method(xx_ref, uu_ref):
             dJ_temp = Bt.T @ lmbd[:, tt + 1, kk][:, None] + bt  # gradient of J wrt u
             deltau_temp = -dJ_temp
 
-            print("deltau_temp", deltau_temp)
 
             lmbd[:, tt, kk] = lmbd_temp.squeeze()
             dJ[:, tt, kk] = dJ_temp.squeeze()
@@ -130,11 +129,12 @@ def gradient_method(xx_ref, uu_ref):
                 # update the stepsize
                 stepsize = beta * stepsize
             else:
-                if visu_armijo and kk % 10 == 0:
-                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
-                    print("Armijo stepsize = {:.3e}".format(stepsize))
-                    break
+                print("Armijo stepsize = {:.3e}".format(stepsize))
+                break
 
+        #if visu_armijo and kk % 10 == 0:
+            #plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+                   
        
         ############################
         # Update the current solution

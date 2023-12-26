@@ -74,9 +74,9 @@ def main(args):
         plots.derivatives_plot(xx_traj, uu_traj)
 
     # Application of the newthon method
-    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
     #xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
-    #xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
+    xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
 
     # print("xx_star", xx_star.shape)
     # print("uu_star", uu_star.shape)
