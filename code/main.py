@@ -16,7 +16,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
 def main(args):
-    V_des = [20, 20]
+    V_des = [1, 1]
     beta_des = [1, 2]
 
     eq1 = eq.find(V=V_des[0], beta=beta_des[0])

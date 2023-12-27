@@ -54,7 +54,7 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
         JJ_temp += temp_cost
 
         stepsizes.append(stepsize)  # save the stepsize
-        costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
+        costs_armijo.append(JJ_temp)  # save the cost associated to the stepsize
 
         if JJ_temp > JJ[kk] + cc * stepsize * descent_arm:
             # update the stepsize
@@ -90,39 +90,30 @@ def newton_method_optcon(xx_ref, uu_ref):
     kk = 0  # Definition of the iterations variable
 
     # Initialization to zero of the derivatives wrt x and u
-    fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
-    fu = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants.TT))
+    #fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
+    #fu = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants.TT))
 
     # Initialization to zero of the matrices Q, R, S, q and r
-    qqt = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
-    rrt = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
+    #qqt = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+    #rrt = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
+
+    # Initialization of the trajectory at the first equilibrium point
+    xx[:, :, kk] = np.tile(xx_ref[:, 0], (constants.TT, 1)).T
+    uu[:, :, kk] = np.tile(uu_ref[:, 0], (constants.TT, 1)).T
 
     print("Initialization done")  # For debugging purposes
 
     for kk in range(max_iters - 1):
+        JJ[kk] = 0
         print(f"Iteration {kk}")
-        if kk == 0:
-            # Initialization of the trajectory at the first equilibrium point
-            xx[:, :, kk] = np.tile(xx_ref[:, 0], (constants.TT, 1)).T
-            uu[:, :, kk] = np.tile(uu_ref[:, 0], (constants.TT, 1)).T
 
-        # Evaluate nabla1f, nabla2f, nabla1cost, nabla2cost, nablaTcost and hessians
-        # from 0 to T - 2 because in python T - 1 will be our T
-        print("Computing derivatives...")  # For debugging purposes
-        for tt in range(constants.TT - 1):
-            JJ[kk] += cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[0].squeeze()
-            qqt[:, tt] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1].squeeze()
-            rrt[:, tt] = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2].squeeze()
+        # calculate cost
+        for tt in range(constants.TT-1):
+            temp_cost = cst.stagecost(xx[:,tt, kk], uu[:,tt,kk], xx_ref[:,tt], uu_ref[:,tt])[0]
+            JJ[kk] += temp_cost
 
-
-            fx[:, :, tt] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1].squeeze()
-            fu[:, :, tt] = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2].squeeze()
-
-        
-        JJ[kk] += cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[0].squeeze()
-        qqt[:, constants.TT - 1] = cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[1].squeeze()
-
-        print("Derivatives computed")  # For debugging purposes
+        temp_cost = cst.termcost(xx[:,-1,kk], xx_ref[:,-1])[0]
+        JJ[kk] += temp_cost
 
         #Solve backward the costate equation to get lmbd, which is used in armijo
         lmbd_temp = cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[1]
@@ -130,13 +121,21 @@ def newton_method_optcon(xx_ref, uu_ref):
 
         print("Solving backward the costate equation")  # For debugging purposes
         for tt in reversed(range(constants.TT - 1)):
-        
-            lmbd[:, tt, kk][:,None] = fx[:, :, tt] @ lmbd[:, tt + 1, kk][:, None] + qqt[:, tt, None]  # costate equation
-            dJ_temp = fu[:, :, tt] @ lmbd[:, tt + 1, kk][:, None] + rrt[:, tt, None]  # gradient of J wrt u
-            deltau_temp = -dJ_temp
+
+            qqt= cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1]
+            rrt= cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2]
+
+            fx= dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1]
+            fu= dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2]
+
+            lmbd_temp = fx @ lmbd[:, tt + 1, kk][:, None] + qqt  # costate equation
+            
+            lmbd[:, tt, kk] = lmbd_temp.squeeze() # costate equation
+            dJ_temp = fu @ lmbd[:, tt + 1, kk][:, None] + rrt  # gradient of J wrt u
+            #deltau_temp = -dJ_temp
 
             dJ[:, tt, kk] = dJ_temp.squeeze()
-            deltau[:, tt, kk] = deltau_temp.squeeze()
+            #deltau[:, tt, kk] = deltau_temp.squeeze()
 
             #descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #Calcolarla quando si ha la direzione di discesa
 
@@ -144,31 +143,31 @@ def newton_method_optcon(xx_ref, uu_ref):
         delta_x = cp.Variable((constants.NUMBER_OF_STATES, constants.TT+1))  # chat gpt: TT + 1
         delta_u = cp.Variable((constants.NUMBER_OF_INPUTS, constants.TT))
 
-        # Definition of the objective function (= cost function)
+        # Definition of the objective function (= cost function) and the constraints
+        constraints = []
         cost_function = 0
 
         for tt in range(constants.TT - 1):
-            q = qqt[:, tt] #Occhio alle dimensioni e ai trasposti. Usare il codice della lezione
-            r = rrt[:, tt]
+            q = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[1]
+            r = cst.stagecost(xx[:, tt, kk], uu[:, tt, kk], xx_ref[:, tt], uu_ref[:, tt])[2]
+            A = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[1].T
+            B = dyn.dynamics(xx[:, tt, kk], uu[:, tt, kk])[2].T
 
             # Computation of the stage cost
-            cost_function += q @ delta_x[:, tt, None] + r @ delta_u[:, tt, None] + 0.5 * cp.quad_form(delta_x[:, tt], Q) + 0.5 * cp.quad_form(delta_u[:, tt], R)
-
-        # Computation of the terminal cost
-        q = qqt[:, constants.TT - 1]
-        cost_function += q @ delta_x[:, constants.TT - 1] + 0.5 * cp.quad_form(delta_x[:, constants.TT - 1], Q)
-
-        print("Cost function computed")  # For debugging purposes
-
-        # Definition of the constraints (dynamics of the system)
-        constraints = []
-        
-        for tt in range(constants.TT - 1):
-            A = fx[:, :, tt].T
-            B = fu[:, :, tt].T
+            cost_function += q.T @ delta_x[:, tt] + r.T @ delta_u[:, tt] + 0.5 * cp.quad_form(delta_x[:, tt], Q) + 0.5 * cp.quad_form(delta_u[:, tt], R)
+            
             constraints.append(delta_x[:, tt + 1] == A @ delta_x[:, tt] + B @ delta_u[:, tt])
-        constraints.append(delta_x[:, 0] == np.zeros(constants.NUMBER_OF_STATES))
 
+        # Computation of the terminal cost and initial constraint
+        q = cst.termcost(xx[:, constants.TT - 1, kk], xx_ref[:, constants.TT - 1])[1]
+        cost_function += q.T @ delta_x[:, constants.TT - 1] + 0.5 * cp.quad_form(delta_x[:, constants.TT - 1], Q)
+
+        constraints.append(delta_x[:, 0] == np.zeros(constants.NUMBER_OF_STATES))
+        print("delta_x[:,0]",delta_x[:,0])
+        print("shape delta_x[:,0]",delta_x[:,0].shape)
+        print("Cost function and constraints computed")  # For debugging purposes
+
+        
         # Definition of the optimization problem
         problem = cp.Problem(cp.Minimize(cost_function), constraints)
 
@@ -193,18 +192,15 @@ def newton_method_optcon(xx_ref, uu_ref):
         # Update the current solution
         ############################
 
-
         xx_temp = np.zeros((constants.NUMBER_OF_STATES,constants.TT))
         uu_temp = np.zeros((constants.NUMBER_OF_INPUTS,constants.TT))
 
         xx_temp[:,0] = xx_ref[:,0]
 
         for tt in range(constants.TT-1):
-            uu_temp[:,tt] = uu[:,tt,kk] + stepsize*delta_u_star[:,tt]
-            xx_temp[:,tt+1] = dyn.dynamics(xx_temp[:,tt], uu_temp[:,tt])[0]
+            uu[:,tt,kk+1] = uu[:,tt,kk] + stepsize*delta_u_star[:,tt]
+            xx[:,tt+1,kk+1] = dyn.dynamics(xx[:,tt,kk+1], uu[:,tt,kk+1])[0]
 
-        xx[:,:,kk+1] = xx_temp
-        uu[:,:,kk+1] = uu_temp
 
         ############################
         # Termination condition
