@@ -16,8 +16,8 @@ number_of_inputs = constants.NUMBER_OF_INPUTS
 # anche perchè l'equilibrio dipende da queste ultime
 
 # Definition the cost matrices
-QQt = np.diag([0.0001, 0.002, 0.003])
-RRt = np.diag([0.00001, 0.00002])
+QQt = np.diag([0.1, 0.1, 0.1])
+RRt = np.diag([1, 0.02])
 
 QQT = QQt
 

@@ -15,7 +15,7 @@ plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
 max_iters = 40
-stepsize_0 = 0.001
+stepsize_0 = 0.7
 
 #Armijo parametrs
 cc = 0.5
@@ -54,7 +54,7 @@ def gradient_method(xx_ref, uu_ref):
 
     # Initialization of the trajectory to the initial equilibrium point
     xx[:, :, 0] = xx_ref[:,0,None]
-    uu[:, :, 0] = uu_ref[:,0, None]
+    uu[:, :, 0] = uu_ref[:,0,None]
 
     x0 = xx_ref[:, 0]
 
@@ -89,7 +89,7 @@ def gradient_method(xx_ref, uu_ref):
             deltau[:, tt, kk] = deltau_temp.squeeze()
 
             descent[kk] += deltau[:, tt, kk].T @ deltau[:, tt, kk]
-            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] #
+            descent_arm[kk] += dJ[:, tt, kk].T @ deltau[:, tt, kk] 
 
         ##################################
         # Stepsize selection - ARMIJO
@@ -132,8 +132,8 @@ def gradient_method(xx_ref, uu_ref):
                 print("Armijo stepsize = {:.3e}".format(stepsize))
                 break
 
-        #if visu_armijo and kk % 10 == 0:
-            #plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+        if visu_armijo and kk % 10 == 0:
+            plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
                    
        
         ############################

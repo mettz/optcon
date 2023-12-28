@@ -142,7 +142,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0
     # Armijo plot
     #UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
     ############################
-    steps = np.linspace(0, stepsize_0, int(2e1))
+    steps = np.linspace(0, stepsize_0, int(4e1))
     costs = np.zeros(len(steps))
 
     for ii in range(len(steps)):
@@ -156,7 +156,7 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0
         xx_temp[:, 0] = x0
 
         for tt in range(constants.TT - 1):
-            uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt] #prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
+            uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt, kk] #prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
             xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 
         # temp cost calculation
