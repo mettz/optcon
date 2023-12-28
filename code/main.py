@@ -15,9 +15,8 @@ import plots
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 def main(args):
-    V_des = [1, 1.2]
-    #beta_des = [20, 10]
-    psi_dot_des = [0, 0.5]
+    V_des = [1, 1]
+    psi_dot_des = [0, 0.1]
 
     eq1 = eq.find(V=V_des[0], psi_dot=psi_dot_des[0])
     print(eq1)

@@ -14,7 +14,7 @@ plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
-max_iters = 40
+max_iters = 80
 stepsize_0 = 0.7
 
 #Armijo parametrs
@@ -50,7 +50,7 @@ def gradient_method(xx_ref, uu_ref):
     print("Starting the computation of the optimal trajectory...")
 
     kk = 0
-    iters = max_iters # 10
+    iters = max_iters
 
     # Initialization of the trajectory to the initial equilibrium point
     xx[:, :, 0] = xx_ref[:,0,None]
@@ -124,7 +124,9 @@ def gradient_method(xx_ref, uu_ref):
 
             stepsizes.append(stepsize)  # save the stepsize
             costs_armijo.append(np.min([JJ_temp, 100 * JJ[kk]]))  # save the cost associated to the stepsize
-
+            
+            #print('JJ_temp', JJ_temp)
+            #print('JJ[kk] + cc * stepsize * descent_arm[kk]', JJ[kk] + cc * stepsize * descent_arm[kk])                            
             if JJ_temp > JJ[kk] + cc * stepsize * descent_arm[kk]:
                 # update the stepsize
                 stepsize = beta * stepsize
@@ -133,7 +135,7 @@ def gradient_method(xx_ref, uu_ref):
                 break
 
         if visu_armijo and kk % 10 == 0:
-            plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+            plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm[kk], JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
                    
        
         ############################
