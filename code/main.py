@@ -14,19 +14,19 @@ import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-
 def main(args):
-    V_des = [1, 1]
-    beta_des = [1, 2]
+    V_des = [1, 1.2]
+    #beta_des = [20, 10]
+    psi_dot_des = [0, 0.5]
 
-    eq1 = eq.find(V=V_des[0], beta=beta_des[0])
+    eq1 = eq.find(V=V_des[0], psi_dot=psi_dot_des[0])
     print(eq1)
-    eq2 = eq.find(V=V_des[1], beta=beta_des[1])
+    eq2 = eq.find(V=V_des[1], psi_dot=psi_dot_des[1])
     print(eq2)
 
-    xx_eq1 = np.array([V_des[0], beta_des[0], eq1.psi_dot])
+    xx_eq1 = np.array([V_des[0], eq1.beta, psi_dot_des[0]])
     uu_eq1 = np.array([eq1.delta, eq1.Fx])
-    xx_eq2 = np.array([V_des[1], beta_des[1], eq2.psi_dot])
+    xx_eq2 = np.array([V_des[1], eq2.beta, psi_dot_des[1]])
     uu_eq2 = np.array([eq2.delta, eq2.Fx])
 
     curve = None
@@ -62,8 +62,8 @@ def main(args):
         plt.show()
 
     if args.show_verify_equilibria:
-        plots.verify_equilibria(xx_eq1, uu_eq1, V_des[0], beta_des[0])
-        plots.verify_equilibria(xx_eq2, uu_eq2, V_des[1], beta_des[1])
+        plots.verify_equilibria(xx_eq1, uu_eq1, V_des[0], psi_dot_des[0])
+        plots.verify_equilibria(xx_eq2, uu_eq2, V_des[1], psi_dot_des[1])
 
     if args.show_derivative_plots:
         xx_traj = np.ones((constants.NUMBER_OF_STATES, constants.TT))
@@ -76,7 +76,7 @@ def main(args):
     # Application of the newthon method
     #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
     #xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
-    xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
+    #xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
 
     # print("xx_star", xx_star.shape)
     # print("uu_star", uu_star.shape)

@@ -5,19 +5,19 @@ import constants
 import dynamics as dyn
 
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
-def verify_equilibria(equilibrium_state, equilibrium_input, V_des, beta_des):
+def verify_equilibria(equilibrium_state, equilibrium_input, V_des, psi_dot_des):
     # Plot of the system dynamics starting by the equilibrium points
-    V_des, beta_des, psi_dot = equilibrium_state
-    xx = np.array([V_des, beta_des, psi_dot])
+    V_des, beta, psi_dot_des = equilibrium_state
+    xx = np.array([V_des, beta, psi_dot_des])
     delta, Fx = equilibrium_input
     uu = np.array([delta, Fx])
 
     steps = np.linspace(0, 100, 100000)
     trajectory_xx = np.zeros((len(steps), len(xx)))
 
-    for i in range(len(steps)):
+    for ii in range(len(steps)):
         xx_plus = dyn.dynamics(xx, uu)[0]
-        trajectory_xx[i, :] = xx_plus
+        trajectory_xx[ii, :] = xx_plus
         xx = xx_plus
 
     plt.figure()
@@ -137,7 +137,7 @@ def derivatives_plot(xx_traj, uu_traj):
 # Gradient method plots
 ############################
     
-def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns, ni, TT, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
+def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
     ############################
     # Armijo plot
     #UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
@@ -150,26 +150,27 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
 
         # temp solution update
 
-        xx_temp = np.zeros((ns, TT))
-        uu_temp = np.zeros((ni, TT))
+        xx_temp = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+        uu_temp = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
         xx_temp[:, 0] = x0
 
-        for tt in range(TT - 1):
+        for tt in range(constants.TT - 1):
             uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt] #prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
             xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 
         # temp cost calculation
         JJ_temp = 0
 
-        for tt in range(TT - 1):
+        for tt in range(constants.TT - 1):
             temp_cost = cst.stagecost(xx_temp[:, tt], uu_temp[:, tt], xx_ref[:, tt], uu_ref[:, tt])[0]
             JJ_temp += temp_cost
 
         temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
         JJ_temp += temp_cost
 
-        costs[ii] = np.min([JJ_temp, 100 * JJ[kk]])
+        #costs[ii] = np.min([JJ_temp, 100 * JJ[kk]]) nostro codice
+        costs[ii] = JJ_temp # Ste e Davide
 
     plt.figure(1)
     plt.clf()
@@ -178,15 +179,9 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, ns
 
     plt.plot(steps, JJ[kk] + descent_arm*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
 
-    plt.plot(
-        steps,
-        JJ[kk] + cc * descent_arm * steps,
-        color="g",
-        linestyle="dashed",
-        label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$",
-    )
-
-    plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+    plt.plot(steps, JJ[kk] + cc * descent_arm * steps, color="g", linestyle="dashed", label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
+    
+    plt.scatter(stepsizes, costs_armijo, marker="*", color ='k')  # plot the tested stepsize
 
     plt.grid()
     plt.xlabel("stepsize")

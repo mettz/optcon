@@ -64,7 +64,7 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
             if ii == armijo_maxiters-1:
                 print("Armijo stepsize = {:.3e}".format(stepsize))
                 if visu_armijo and kk % 10 == 0:
-                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
+                    plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
                 
                 return stepsize
             
@@ -72,7 +72,7 @@ def armijo_stepsize(xx_ref, uu_ref, xx, uu, delta_u, kk, descent_arm):
             print("Armijo stepsize = {:.3e}".format(stepsize))
             
             if visu_armijo and kk % 10 == 0:
-                plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
+                plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, xx[:,0,kk], uu, delta_u, dyn, cst, xx_ref, uu_ref)
                 
             return stepsize
         
