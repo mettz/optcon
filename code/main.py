@@ -73,8 +73,8 @@ def main(args):
         plots.derivatives_plot(xx_traj, uu_traj)
 
     # Application of the newthon method
-    #xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
-    xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
+    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
+    #xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
     #xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
 
     tt_hor = np.linspace(0, constants.TF, constants.TT)
@@ -102,6 +102,26 @@ def main(args):
         plt.grid()
         plt.legend()
     plt.show()
+
+    #Defining percentage of errors in state and input
+    error=[]
+    for i in range(constants.NUMBER_OF_STATES):
+        error.append(np.abs(xx_ref[i, :] - xx_star[i, :]))
+        print(f"Error in state {constants.STATES[i]}: {np.mean(error)}")
+
+    for i in range(constants.NUMBER_OF_INPUTS):
+        error.append(np.abs(uu_ref[i, :] - uu_star[i, :]))
+        print(f"Error in input {constants.INPUTS[i]}: {np.mean(error)}")
+
+    #Defining sovraelongation in input
+    sovraelongation=[]
+    for i in range(constants.NUMBER_OF_INPUTS):
+        max_input_star = np.max(uu_star[i, :])
+        max_input_ref = np.max(uu_ref[i, :])
+        sovraelongation.append((max_input_star-max_input_ref)/max_input_ref)
+        print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
+
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")

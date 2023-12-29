@@ -14,7 +14,7 @@ plt.rcParams["figure.figsize"] = (10, 8)
 plt.rcParams.update({"font.size": 22})
 
 # Algorithm parameters
-max_iters = 80
+max_iters = 40
 stepsize_0 = 0.7
 
 #Armijo parametrs
@@ -22,7 +22,7 @@ cc = 0.5
 beta = 0.7
 armijo_maxiters = 20 
 term_cond = 1e-3
-visu_armijo = True
+visu_armijo = False
 
 # Initial guess
 xx_init = np.ones((constants.NUMBER_OF_STATES, constants.TT))

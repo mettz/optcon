@@ -1,0 +1,222 @@
+Equilibrium point for (V=1, psi_dot=0):
+  - beta = 0.0
+  - delta = 0.0
+  - Fx = 0.0
+Is close? Yes
+
+
+Equilibrium point for (V=1, psi_dot=0.1):
+  - beta = 0.09292778496277178
+  - delta = 0.24630448940790403
+  - Fx = 1.7715113929799637
+
+
+PROVA 1:
+
+max_iters=20;
+QQt = np.diag([0.01, 200, 300])
+RRt = np.diag([0.1, 2])
+
+Error in state V: 0.019594435813770756
+Error in state beta: 0.011384998823698027
+Error in state psi_dot: 0.008369260197170332
+
+Error in input delta: 0.00936515345553413
+Error in input Fx: 0.024669346098831847
+
+Sovraelongation in input delta: 1.5906800376988113
+Sovraelongation in input Fx: -0.09689148356198882
+
+Non va bene, numero di iterazioni troppo basso.
+
+PROVA 2:
+
+max_iters=40; Stesso costo
+
+Error in state V: 0.020092625451728924
+Error in state beta: 0.010958939373062873
+Error in state psi_dot: 0.007772480546118613
+
+Error in input delta: 0.007822474637668355
+Error in input Fx: 0.006944619483433971
+
+Sovraelongation in input delta: 1.6021167303569428
+Sovraelongation in input Fx: -0.0037864451706694398
+
+Ora Fx viene seguito alla perfezione e gli stati più o meno vanno bene. Valuto quanta differenza c'è con 80 iterazioni:
+
+PROVA 3: 
+
+max_iters=80
+
+Error in state V: 0.020206201283677776
+Error in state beta: 0.01088959876987938
+Error in state psi_dot: 0.007751512031619235
+
+Error in input delta: 0.007637861193508725
+Error in input Fx: 0.006761308140786633
+
+Sovraelongation in input delta: 1.6131173492505255
+Sovraelongation in input Fx: -0.0035856383369123105
+
+Non c'è un improvement che giustifica il raddoppio delle iterazioni. 
+Si nota anche che alla quarantesima iterazione il costo smette di decrescere. 
+Seleziono 40.
+
+PROVA 4:
+
+Diminuisco il costo per gli stati che rimangono costanti, diminuisco il costo per gli input (consigli di Sforni)
+
+max_iters=40;
+
+QQt = np.diag([0.001, 20, 30])
+RRt = np.diag([0.01, 0.2])
+
+Error in state V: 0.02008889631742808
+Error in state beta: 0.011308584131006433
+Error in state psi_dot: 0.00834554613028027
+
+Error in input delta: 0.008751740627212613
+Error in input Fx: 0.017073685108496495
+
+Sovraelongation in input delta: 1.6128214329685595
+Sovraelongation in input Fx: -0.05677621504582669
+
+Aumentato troppo errore Fx. Gli altri stati non hanno enormi differenze.
+
+PROVA 5
+{ Iniziale: QQt = np.diag([0.01, 200, 300])
+            RRt = np.diag([0.1, 2])
+Ragionamento: se aumento la costante in delta, è più "importante" quindi la sovraelongazione dovrebbe diminuire.
+
+QQt = np.diag([0.001, 25, 20])
+RRt = np.diag([4, 1])
+
+Error in state V: 0.009533344753441952
+Error in state beta: 0.005440421371695676
+Error in state psi_dot: 0.0042864915700646785
+
+Error in input delta: 0.004018557491082718
+Error in input Fx: 0.0033460176421773184
+
+Sovraelongation in input delta: 0.3785882660278792
+Sovraelongation in input Fx: -0.0007132582205495124
+
+Intuizione corretta. E' diminuito anche l'errore nella velocità, perchè ho diminuito il suo valore.
+Tutte le variabili sono migliorate. 
+
+PROVA 6:
+Aumento ancora delta e diminuisco ancora V, lascio le altre invariate:
+
+QQt = np.diag([0.0001, 25, 20])
+RRt = np.diag([8, 1])
+
+Error in state V: 0.009248065185057502
+Error in state beta: 0.005376953749301039
+Error in state psi_dot: 0.004320095525919578
+
+Error in input delta: 0.0038184679393485363
+Error in input Fx: 0.0031940260777936352
+
+Sovraelongation in input delta: 0.2402812652137278
+Sovraelongation in input Fx: -0.0007548246032375748
+
+V non è migliorato troppo, mentre la sovraelongazione è diminuita ancora. 
+
+PROVA 7:
+Aumento ancora beta, V non lo tocco più perchè ho paura che se poi vogliamo assegnare V diverse farà schifo.
+
+QQt = np.diag([0.0001, 25, 20])
+RRt = np.diag([16, 1])
+
+Error in state V: 0.009173599510987833
+Error in state beta: 0.0053926491231514485
+Error in state psi_dot: 0.004405314860728955
+
+Error in input delta: 0.003666194630587474
+Error in input Fx: 0.003257959954780952
+
+Sovraelongation in input delta: 0.142266395432029
+Sovraelongation in input Fx: -0.001800227922395801
+
+Diminuita ancora. 
+
+PROVA 8:
+
+QQt = np.diag([0.0001, 25, 20])
+RRt = np.diag([32, 1])
+
+Error in state V: 0.009172440373153524
+Error in state beta: 0.0054599177819978075
+Error in state psi_dot: 0.0044935309349314195
+
+Error in input delta: 0.0036079631550153092
+Error in input Fx: 0.003067331844370591
+
+Sovraelongation in input delta: 0.07806752857082816
+Sovraelongation in input Fx: -0.0009849138355731977
+
+Direi di lasciare così per il momento.
+
+    TRAIETTORIA CUBICA
+
+PROVA 10:
+
+Error in state V: 0.005468165339669172
+Error in state beta: 0.0034778990068459552
+Error in state psi_dot: 0.0029962875206950863
+
+Error in input delta: 0.002496449000632431
+Error in input Fx: 0.0034843557557509967
+
+Sovraelongation in input delta: 0.012692049243223837
+Sovraelongation in input Fx: -0.008385657195845731
+
+Input seguiti alla perfezione, stati no molto brutti (beta e psi_dot). Aumento il loro costo un po'
+
+PROVA 11:
+QQt = np.diag([0.0001, 40, 30])
+RRt = np.diag([32, 1])
+
+Error in state V: 0.0055115269793347965
+Error in state beta: 0.003823846080163493
+Error in state psi_dot: 0.0032563579689872083
+
+Error in input delta: 0.0029193964135244316
+Error in input Fx: 0.011476401925676479
+
+Sovraelongation in input delta: 0.020387129899159747
+Sovraelongation in input Fx: -0.05158672447716665
+
+Non sono migliorati gli stati e sono peggiorati gli input, Fx non viene seguito più bene.
+
+PROVA 12:
+QQt = np.diag([0.0001, 30, 25])
+RRt = np.diag([32, 1])
+
+Error in state V: 0.005486420832890032
+Error in state beta: 0.003522848378534232
+Error in state psi_dot: 0.00300705574179718
+
+Error in input delta: 0.0025083782849663577
+Error in input Fx: 0.006475644667787472
+
+Sovraelongation in input delta: 0.008893792947457006
+Sovraelongation in input Fx: -0.025215630922240016
+
+Non cambia niente. Rimetto PROVA 10 dove gli input erano seguiti alla perfezione. 
+
+PROVA 13
+max_iters=80
+
+Error in state V: 0.00545995731556263
+Error in state beta: 0.003486309905764274
+Error in state psi_dot: 0.0030038904222260553
+
+Error in input delta: 0.0024651428509644517
+Error in input Fx: 0.0021736968393697245
+
+Sovraelongation in input delta: 0.010414860159884227
+Sovraelongation in input Fx: -0.0011283116954341156
+
+Non cambia niente! Rimetto 40
