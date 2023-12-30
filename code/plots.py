@@ -4,6 +4,7 @@ import numpy as np
 import constants
 import dynamics as dyn
 
+
 # ===== Plots of the equilibrium points using equilibria as initial conditions =========
 def verify_equilibria(equilibrium_state, equilibrium_input, V_des, psi_dot_des):
     # Plot of the system dynamics starting by the equilibrium points
@@ -109,38 +110,41 @@ def dynamics_plot(xx_init, uu):
     plt.grid()
     plt.show()
 
+
 ################# Plot of the derivatives over the trajectory #################
 def derivatives_plot(xx_traj, uu_traj):
-    LinPoint = int (constants.TT / 20)
+    LinPoint = int(constants.TT / 20)
     xx_plus = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     gradient_taylor_timed = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     fx = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
     xx_plus_taylor = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
     fu = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants.TT))
-    
+
     for time in range(constants.TT):
         xx_plus[:, time], fx[:, :, time], fu[:, :, time] = dyn.dynamics(xx_traj[:, time], uu_traj[:, time])
 
     for time in range(constants.TT):
-        gradient_taylor_timed[:, time] = xx_plus[:, time] + fx[:, :, time].T @ (xx_plus[:, time] + - xx_plus[:, LinPoint])
+        gradient_taylor_timed[:, time] = xx_plus[:, time] + fx[:, :, time].T @ (xx_plus[:, time] + -xx_plus[:, LinPoint])
         xx_plus_taylor[:, time] = xx_traj[:, LinPoint] + (time - float(LinPoint)) * (xx_plus[:, LinPoint] - xx_traj[:, LinPoint])
-    
-    span = np.linspace((LinPoint - 10), (LinPoint +10), 20)
+
+    span = np.linspace((LinPoint - 10), (LinPoint + 10), 20)
 
     fig, axs = plt.subplots(constants.NUMBER_OF_STATES, 1, sharex=True, figsize=(10, 6))
     for idx in range(constants.NUMBER_OF_STATES):
-        axs[idx].plot(span, xx_plus_taylor[idx, (LinPoint-10):(LinPoint+10)],'k', label=f'taylor_x{idx} in {LinPoint}')
-        axs[idx].plot(range(constants.TT), xx_traj[idx, :], 'r--', label=f'x{idx}')
+        axs[idx].plot(span, xx_plus_taylor[idx, (LinPoint - 10) : (LinPoint + 10)], "k", label=f"taylor_x{idx} in {LinPoint}")
+        axs[idx].plot(range(constants.TT), xx_traj[idx, :], "r--", label=f"x{idx}")
     plt.show()
-    
+
+
 ############################
 # Gradient method plots
 ############################
-    
+
+
 def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
     ############################
     # Armijo plot
-    #UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
+    # UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
     ############################
     steps = np.linspace(0, stepsize_0, int(4e1))
     costs = np.zeros(len(steps))
@@ -156,7 +160,9 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0
         xx_temp[:, 0] = x0
 
         for tt in range(constants.TT - 1):
-            uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt, kk] #prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
+            uu_temp[:, tt] = (
+                uu[:, tt, kk] + step * deltau[:, tt, kk]
+            )  # prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
             xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
 
         # temp cost calculation
@@ -169,19 +175,19 @@ def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0
         temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
         JJ_temp += temp_cost
 
-        #costs[ii] = np.min([JJ_temp, 100 * JJ[kk]]) nostro codice
-        costs[ii] = JJ_temp # Ste e Davide
+        # costs[ii] = np.min([JJ_temp, 100 * JJ[kk]]) nostro codice
+        costs[ii] = JJ_temp  # Ste e Davide
 
     plt.figure(1)
     plt.clf()
 
     plt.plot(steps, costs, color="g", label="$J(\\mathbf{u}^k - stepsize*d^k)$")
 
-    plt.plot(steps, JJ[kk] + descent_arm*steps, color='r', label='$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$')
+    plt.plot(steps, JJ[kk] + descent_arm * steps, color="r", label="$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
 
     plt.plot(steps, JJ[kk] + cc * descent_arm * steps, color="g", linestyle="dashed", label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
-    
-    plt.scatter(stepsizes, costs_armijo, marker="*", color ='k')  # plot the tested stepsize
+
+    plt.scatter(stepsizes, costs_armijo, marker="*", color="k")  # plot the tested stepsize
 
     plt.grid()
     plt.xlabel("stepsize")
@@ -229,5 +235,45 @@ def gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, 
     axs[2].grid()
     axs[2].set_ylabel("$u$")
     axs[2].set_xlabel("time")
+
+    plt.show()
+
+
+def mpc_plot(xx_star, uu_star, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin):
+    time = np.arange(constants.TT)
+
+    fig, axs = plt.subplots(constants.NUMBER_OF_STATES + constants.NUMBER_OF_INPUTS, 1, sharex="all")
+
+    for idx in range(constants.NUMBER_OF_STATES):
+        axs[idx].plot(time, xx_real_mpc[idx, :], linewidth=2)
+        axs[idx].plot(time, xx_star[idx, :], "--r", linewidth=2)
+        axs[idx].grid()
+        axs[idx].set_ylabel(f"${constants.STATES[idx]}$")
+
+        axs[idx].set_xlim([-1, constants.TT])
+        axs[idx].legend(["MPC", "OPT"])
+
+        if xmax < 1.1 * np.amax(xx_real_mpc[idx, :]):
+            axs[idx].plot(time, np.ones(constants.TT) * xmax, "--g", linewidth=1)
+            axs[idx].plot(time, np.ones(constants.TT) * xmin, "--g", linewidth=1)
+
+    for idx in range(constants.NUMBER_OF_INPUTS):
+        axx = idx + constants.NUMBER_OF_STATES
+
+        axs[axx].plot(time, uu_real_mpc[idx, :], "g", linewidth=2)
+        axs[axx].plot(time, uu_star[idx, :], "--r", linewidth=2)
+        axs[axx].grid()
+        axs[axx].set_ylabel(f"${constants.INPUTS[idx]}$")
+
+        if umax < 1.1 * np.amax(uu_real_mpc[idx, :]):
+            axs[axx].plot(time, np.ones(constants.TT) * umax, "--g", linewidth=1)
+            axs[axx].plot(time, np.ones(constants.TT) * umin, "--g", linewidth=1)
+
+        axs[idx + constants.NUMBER_OF_STATES].set_xlim([-1, constants.TT])
+        axs[idx + constants.NUMBER_OF_STATES].legend(["MPC", "OPT"])
+
+    axs[-1].set_xlabel("time")
+
+    fig.align_ylabels(axs)
 
     plt.show()

@@ -58,8 +58,10 @@ KK = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants
 sigma = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
 
-def newton_method(xx_ref, uu_ref):
+def newton_method(xx_ref, uu_ref, **kwargs):
     global max_iters
+    visu_armijo = kwargs.get("visu_armijo", False)
+
     print("Starting the computation of the optimal trajectory...")
 
     fxx, fuu, fxu = cst.hessian_cost()

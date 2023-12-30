@@ -2,6 +2,7 @@ import signal
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
+import cvxpy as cp
 
 import constants
 import curves
@@ -9,6 +10,7 @@ import dynamics as dyn
 import equilibrium as eq
 import solvers
 import plots
+import cost as cst
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -75,9 +77,9 @@ def main(args):
     uu_star = None
 
     if args.solver == "gradient":
-        xx_star, uu_star = solvers.gradient(xx_ref, uu_ref)
+        xx_star, uu_star = solvers.gradient(xx_ref, uu_ref, show_armijo_plots=args.show_armijo_plots)
     elif args.solver == "newton":
-        xx_star, uu_star = solvers.newton(xx_ref, uu_ref)
+        xx_star, uu_star = solvers.newton(xx_ref, uu_ref, show_armijo_plots=args.show_armijo_plots)
     else:
         raise ValueError(f"Invalid solver {args.solver}")
 
@@ -125,6 +127,69 @@ def main(args):
         sovraelongation.append((max_input_star - max_input_ref) / max_input_ref)
         print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
 
+    if args.mpc:
+        Tpred = 50
+        umax = 1
+        umin = -umax
+        xmax = 20
+        xmin = -xmax
+
+        xx0 = xx_star[:, 0]
+        AA = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
+        BB = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT))
+
+        for tt in range(constants.TT):
+            fx, fu = dyn.dynamics(xx_star[:, tt], uu_star[:, tt])[1:]
+
+            AA[:, :, tt] = fx.T
+            BB[:, :, tt] = fu.T
+
+        xx_real_mpc = np.ones((constants.NUMBER_OF_STATES, constants.TT))
+        uu_real_mpc = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
+
+        xx_mpc = np.zeros((constants.NUMBER_OF_STATES, Tpred, constants.TT))
+
+        xx_real_mpc[:, 0] = xx0.squeeze()
+
+        for tt in range(constants.TT - 1):
+            # System evolution - real with MPC
+            xx_t_mpc = xx_real_mpc[:, tt]  # get initial condition
+
+            cost = 0
+            constr = []
+
+            xx_mpc_var = cp.Variable((constants.NUMBER_OF_STATES, Tpred))
+            uu_mpc_var = cp.Variable((constants.NUMBER_OF_INPUTS, Tpred))
+
+            # Solve MPC problem - apply first input
+            for tt in range(Tpred - 1):
+                AAt = AA[:, :, tt]
+                BBt = BB[:, :, tt]
+                cost += cp.quad_form(xx_mpc_var[:, tt], cst.QQt) + cp.quad_form(uu_mpc_var[:, tt], cst.RRt)
+                constr += [
+                    xx_mpc_var[:, tt + 1] == AAt @ xx_mpc_var[:, tt] + BBt @ uu_mpc_var[:, tt],  # dynamics constraint
+                    uu_mpc_var[:, tt] <= umax,  # other constraints
+                    uu_mpc_var[:, tt] >= umin,
+                    xx_mpc_var[:, tt] <= xmax,
+                    xx_mpc_var[:, tt] >= xmin,
+                ]
+
+            cost += cp.quad_form(xx_mpc_var[:, Tpred - 1], cst.QQT)
+            constr += [xx_mpc_var[:, 0] == xx_t_mpc]
+
+            problem = cp.Problem(cp.Minimize(cost), constr)
+            problem.solve()
+
+            if problem.status == "infeasible":
+                # Otherwise, problem.value is inf or -inf, respectively.
+                print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
+
+            uu_real_mpc[:, tt], xx_mpc[:, :, tt] = uu_mpc_var[:, 0].value, xx_mpc_var.value
+
+            xx_real_mpc[:, tt + 1] = dyn.dynamics(xx_real_mpc[:, tt], uu_real_mpc[:, tt])[0]
+
+        plots.mpc_plot(xx_star, uu_star, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")
@@ -133,11 +198,15 @@ if __name__ == "__main__":
 
     parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton"], default="newton", help="Solver to use")
 
+    parser.add_argument("--mpc", action="store_true", default=False, help="Use MPC")
+
     parser.add_argument("--show-ref-curves-plots", action="store_true", default=False, help="Show the plots of the reference curve")
 
     parser.add_argument("--show-verify-equilibria", action="store_true", default=False, help="Show the plots of the verify equilibria")
 
     parser.add_argument("--show-derivative-plots", action="store_true", default=False, help="Show the plots of the derivatives")
+
+    parser.add_argument("--show-armijo-plots", action="store_true", default=False, help="Show the Armijo plots")
 
     main(parser.parse_args())
 

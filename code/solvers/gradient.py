@@ -18,7 +18,6 @@ cc = 0.5
 beta = 0.7
 armijo_maxiters = 20
 term_cond = 1e-3
-visu_armijo = True
 
 # Initial guess
 xx_init = np.ones((constants.NUMBER_OF_STATES, constants.TT))
@@ -43,8 +42,10 @@ descent = np.zeros(max_iters)
 descent_arm = np.zeros(max_iters)
 
 
-def gradient_method(xx_ref, uu_ref):
+def gradient_method(xx_ref, uu_ref, **kwargs):
     global max_iters
+    visu_armijo = kwargs.get("visu_armijo", False)
+
     print("Starting the computation of the optimal trajectory...")
 
     # Initialization of the trajectory to the initial equilibrium point
