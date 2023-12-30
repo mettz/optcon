@@ -78,8 +78,6 @@ def main(args):
         xx_star, uu_star = solvers.gradient(xx_ref, uu_ref)
     elif args.solver == "newton":
         xx_star, uu_star = solvers.newton(xx_ref, uu_ref)
-    elif args.solver == "cvx":
-        xx_star, uu_star = solvers.cvx(xx_ref, uu_ref)
     else:
         raise ValueError(f"Invalid solver {args.solver}")
 
@@ -133,7 +131,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-c", "--ref-curve", type=str, choices=["step", "cubic"], default="step", help="Reference curve to follow")
 
-    parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton", "cvx"], default="gradient", help="Solver to use")
+    parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton"], default="newton", help="Solver to use")
 
     parser.add_argument("--show-ref-curves-plots", action="store_true", default=False, help="Show the plots of the reference curve")
 
