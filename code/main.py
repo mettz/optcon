@@ -7,12 +7,11 @@ import constants
 import curves
 import dynamics as dyn
 import equilibrium as eq
-import gradient_method_optcon as gmo
-import newton_method_optcon as nmo
-import newton_method_optcon_cvxpy as nmo_cvxpy
+import solvers
 import plots
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
+
 
 def main(args):
     V_des = [1, 1]
@@ -67,15 +66,22 @@ def main(args):
     if args.show_derivative_plots:
         xx_traj = np.ones((constants.NUMBER_OF_STATES, constants.TT))
         uu_traj = np.ones((constants.NUMBER_OF_INPUTS, constants.TT))
-        for i in range(constants.TT-1): 
-            xx_plus = dyn.dynamics(xx_traj[:,i], uu_traj[:,i])[0]
-            xx_traj[:, i+1] = xx_plus
+        for i in range(constants.TT - 1):
+            xx_plus = dyn.dynamics(xx_traj[:, i], uu_traj[:, i])[0]
+            xx_traj[:, i + 1] = xx_plus
         plots.derivatives_plot(xx_traj, uu_traj)
 
-    # Application of the newthon method
-    xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
-    #xx_star, uu_star = gmo.gradient_method(xx_ref, uu_ref)
-    #xx_star, uu_star = nmo_cvxpy.newton_method_optcon(xx_ref, uu_ref)
+    xx_star = None
+    uu_star = None
+
+    if args.solver == "gradient":
+        xx_star, uu_star = solvers.gradient(xx_ref, uu_ref)
+    elif args.solver == "newton":
+        xx_star, uu_star = solvers.newton(xx_ref, uu_ref)
+    elif args.solver == "cvx":
+        xx_star, uu_star = solvers.cvx(xx_ref, uu_ref)
+    else:
+        raise ValueError(f"Invalid solver {args.solver}")
 
     tt_hor = np.linspace(0, constants.TF, constants.TT)
     plt.figure()
@@ -103,8 +109,8 @@ def main(args):
         plt.legend()
     plt.show()
 
-    #Defining percentage of errors in state and input
-    error=[]
+    # Defining percentage of errors in state and input
+    error = []
     for i in range(constants.NUMBER_OF_STATES):
         error.append(np.abs(xx_ref[i, :] - xx_star[i, :]))
         print(f"Error in state {constants.STATES[i]}: {np.mean(error)}")
@@ -113,20 +119,21 @@ def main(args):
         error.append(np.abs(uu_ref[i, :] - uu_star[i, :]))
         print(f"Error in input {constants.INPUTS[i]}: {np.mean(error)}")
 
-    #Defining sovraelongation in input
-    sovraelongation=[]
+    # Defining sovraelongation in input
+    sovraelongation = []
     for i in range(constants.NUMBER_OF_INPUTS):
         max_input_star = np.max(uu_star[i, :])
         max_input_ref = np.max(uu_ref[i, :])
-        sovraelongation.append((max_input_star-max_input_ref)/max_input_ref)
+        sovraelongation.append((max_input_star - max_input_ref) / max_input_ref)
         print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
 
-    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")
 
     parser.add_argument("-c", "--ref-curve", type=str, choices=["step", "cubic"], default="step", help="Reference curve to follow")
+
+    parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton", "cvx"], default="gradient", help="Solver to use")
 
     parser.add_argument("--show-ref-curves-plots", action="store_true", default=False, help="Show the plots of the reference curve")
 
@@ -143,8 +150,6 @@ if __name__ == "__main__":
     # # print("uu_star", uu_star.shape)
     # # print("xx_ref", xx_ref.shape)
     # # print("uu_ref", uu_ref.shape)
-
-    
 
     # # fig, axs = plt.subplots(nmo.ns + nmo.ni, 1, sharex="all")
 
