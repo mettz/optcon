@@ -2,7 +2,7 @@
 DT = 0.01
 
 # Final time of the trajectory
-TF = 5
+TF = 10
 
 # Number of time steps
 TT = int(TF / DT)

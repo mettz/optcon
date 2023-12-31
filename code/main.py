@@ -12,6 +12,8 @@ import solvers
 import plots
 import cost as cst
 
+from LQR_tracking import LQR_tracking
+
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 
@@ -126,6 +128,30 @@ def main(args):
         max_input_ref = np.max(uu_ref[i, :])
         sovraelongation.append((max_input_star - max_input_ref) / max_input_ref)
         print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
+
+    xx_tracking, uu_tracking = LQR_tracking(xx_ref, uu_ref)
+
+    plt.title("Trajectory tracking via LQR")
+    for i in range(constants.NUMBER_OF_STATES):
+        plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
+        plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+        plt.plot(tt_hor, xx_tracking[i, :], label=f"State {constants.STATES[i]}")
+
+        plt.grid()
+        plt.legend()
+    plt.show()
+    
+    plt.figure()
+    plt.clf()
+    plt.title("Trajectory tracking inputs")
+    for i in range(constants.NUMBER_OF_INPUTS):
+        plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
+        plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+        plt.plot(tt_hor, uu_tracking[i, :], label=f"State {constants.INPUTS[i]}")
+
+        plt.grid()
+        plt.legend()
+    plt.show()
 
     if args.mpc:
         Tpred = 50
