@@ -1,42 +1,6 @@
-import numpy as np
 import cvxpy as cp
 
-
-def unconstrained_lqr(AA, BB, QQ, RR, QQf, xx0, T_hor=100):
-    """
-    LQR - given init condition and time horizon, optimal state-input trajectory
-
-    Args
-      - AA, BB: linear dynamics
-      - QQ,RR,QQf: cost matrices
-      - xx0: initial condition
-      - T: time horizon
-    """
-
-    xx0 = xx0.squeeze()
-
-    ns, ni = BB.shape
-
-    xx_lqr = cp.Variable((ns, T_hor))
-    uu_lqr = cp.Variable((ni, T_hor))
-
-    cost = 0
-    constr = []
-
-    for tt in range(T_hor - 1):
-        cost += cp.quad_form(xx_lqr[:, tt], QQ) + cp.quad_form(uu_lqr[:, tt], RR)
-        constr += [xx_lqr[:, tt + 1] == AA @ xx_lqr[:, tt] + BB @ uu_lqr[:, tt]]
-    # sums problem objectives and concatenates constraints.
-    cost += cp.quad_form(xx_lqr[:, T_hor - 1], QQf)
-    constr += [xx_lqr[:, 0] == xx0]
-    problem = cp.Problem(cp.Minimize(cost), constr)
-    problem.solve()
-
-    if problem.status == "infeasible":
-        # Otherwise, problem.value is inf or -inf, respectively.
-        print("Infeasible problem! ")
-
-    return xx_lqr.value, uu_lqr.value
+import constants
 
 
 def linear_mpc(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20, x2_max=20, x2_min=-20, T_pred=5):
@@ -59,25 +23,20 @@ def linear_mpc(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20,
     """
 
     xxt = xxt.squeeze()
+    samples = AA.shape[2]
 
-    ns, ni = BB.shape
-
-    xx_mpc = cp.Variable((ns, T_pred))
-    uu_mpc = cp.Variable((ni, T_pred))
+    xx_mpc = cp.Variable((constants.NUMBER_OF_STATES, T_pred))
+    uu_mpc = cp.Variable((constants.NUMBER_OF_INPUTS, T_pred))
 
     cost = 0
     constr = []
 
-    for tt in range(T_pred - 1):
-        cost += cp.quad_form(xx_mpc[:, tt], QQ) + cp.quad_form(uu_mpc[:, tt], RR)
+    for tau in range(min(T_pred - 1, samples)):
+        AAt = AA[:, :, tau]
+        BBt = BB[:, :, tau]
+        cost += cp.quad_form(xx_mpc[:, tau], QQ) + cp.quad_form(uu_mpc[:, tau], RR)
         constr += [
-            xx_mpc[:, tt + 1] == AA @ xx_mpc[:, tt] + BB @ uu_mpc[:, tt],  # dynamics constraint
-            uu_mpc[:, tt] <= umax,  # other constraints
-            uu_mpc[:, tt] >= umin,
-            xx_mpc[0, tt] <= x1_max,
-            xx_mpc[0, tt] >= x1_min,
-            xx_mpc[1, tt] <= x2_max,
-            xx_mpc[1, tt] >= x2_min,
+            xx_mpc[:, tau + 1] == AAt @ xx_mpc[:, tau] + BBt @ uu_mpc[:, tau],  # dynamics constraint
         ]
     # sums problem objectives and concatenates constraints.
     cost += cp.quad_form(xx_mpc[:, T_pred - 1], QQf)
@@ -90,4 +49,4 @@ def linear_mpc(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20,
         # Otherwise, problem.value is inf or -inf, respectively.
         print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
 
-    return uu_mpc[:, 0].value, xx_mpc.value, uu_mpc.value
+    return uu_mpc[:, 0].value

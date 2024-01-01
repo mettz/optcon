@@ -2,15 +2,14 @@ import signal
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-import cvxpy as cp
 
 import constants
 import curves
 import dynamics as dyn
 import equilibrium as eq
 import solvers
+import mpc
 import plots
-import cost as cst
 
 from LQR_tracking import LQR_tracking
 
@@ -85,31 +84,32 @@ def main(args):
     else:
         raise ValueError(f"Invalid solver {args.solver}")
 
-    tt_hor = np.linspace(0, constants.TF, constants.TT)
-    plt.figure()
-    plt.clf()
-    plt.title("Trajectory following")
-    for i in range(constants.NUMBER_OF_STATES):
-        plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
-        plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
-        plt.plot(tt_hor, xx_star[i, :], label=f"State {constants.STATES[i]}")
+    if not args.hide_opt_plots:
+        tt_hor = np.linspace(0, constants.TF, constants.TT)
+        plt.figure()
+        plt.clf()
+        plt.title("Trajectory following")
+        for i in range(constants.NUMBER_OF_STATES):
+            plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
+            plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+            plt.plot(tt_hor, xx_star[i, :], label=f"State {constants.STATES[i]}")
 
-        plt.grid()
-        plt.legend()
-    plt.show()
+            plt.grid()
+            plt.legend()
+        plt.show()
 
-    tt_hor = np.linspace(0, constants.TF, constants.TT)
-    plt.figure()
-    plt.clf()
-    plt.title("Trajectory following inputs")
-    for i in range(constants.NUMBER_OF_INPUTS):
-        plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
-        plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
-        plt.plot(tt_hor, uu_star[i, :], label=f"State {constants.INPUTS[i]}")
+        tt_hor = np.linspace(0, constants.TF, constants.TT)
+        plt.figure()
+        plt.clf()
+        plt.title("Trajectory following inputs")
+        for i in range(constants.NUMBER_OF_INPUTS):
+            plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
+            plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+            plt.plot(tt_hor, uu_star[i, :], label=f"State {constants.INPUTS[i]}")
 
-        plt.grid()
-        plt.legend()
-    plt.show()
+            plt.grid()
+            plt.legend()
+        plt.show()
 
     # Defining percentage of errors in state and input
     error = []
@@ -129,29 +129,30 @@ def main(args):
         sovraelongation.append((max_input_star - max_input_ref) / max_input_ref)
         print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
 
-    xx_tracking, uu_tracking = LQR_tracking(xx_ref, uu_ref)
+    if args.lqr:
+        xx_tracking, uu_tracking = LQR_tracking(xx_ref, uu_ref)
 
-    plt.title("Trajectory tracking via LQR")
-    for i in range(constants.NUMBER_OF_STATES):
-        plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
-        plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
-        plt.plot(tt_hor, xx_tracking[i, :], label=f"State {constants.STATES[i]}")
+        plt.title("Trajectory tracking via LQR")
+        for i in range(constants.NUMBER_OF_STATES):
+            plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
+            plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+            plt.plot(tt_hor, xx_tracking[i, :], label=f"State {constants.STATES[i]}")
 
-        plt.grid()
-        plt.legend()
-    plt.show()
-    
-    plt.figure()
-    plt.clf()
-    plt.title("Trajectory tracking inputs")
-    for i in range(constants.NUMBER_OF_INPUTS):
-        plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
-        plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
-        plt.plot(tt_hor, uu_tracking[i, :], label=f"State {constants.INPUTS[i]}")
+            plt.grid()
+            plt.legend()
+        plt.show()
 
-        plt.grid()
-        plt.legend()
-    plt.show()
+        plt.figure()
+        plt.clf()
+        plt.title("Trajectory tracking inputs")
+        for i in range(constants.NUMBER_OF_INPUTS):
+            plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
+            plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+            plt.plot(tt_hor, uu_tracking[i, :], label=f"State {constants.INPUTS[i]}")
+
+            plt.grid()
+            plt.legend()
+        plt.show()
 
     if args.mpc:
         Tpred = 50
@@ -160,9 +161,13 @@ def main(args):
         xmax = 20
         xmin = -xmax
 
-        xx0 = xx_star[:, 0]
+        xx0 = xx_star[:, 0]  # - np.array([0.1, 0.1, 0.1]) se metto questo viene orribile
         AA = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
         BB = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT))
+
+        QQ = np.diag([1, 400, 400])
+        QQT = QQ * 700
+        RR = np.diag([0.5, 0.5])
 
         for tt in range(constants.TT):
             fx, fu = dyn.dynamics(xx_star[:, tt], uu_star[:, tt])[1:]
@@ -173,48 +178,27 @@ def main(args):
         xx_real_mpc = np.ones((constants.NUMBER_OF_STATES, constants.TT))
         uu_real_mpc = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
-        xx_mpc = np.zeros((constants.NUMBER_OF_STATES, Tpred, constants.TT))
-
         xx_real_mpc[:, 0] = xx0.squeeze()
 
         for tt in range(constants.TT - 1):
             # System evolution - real with MPC
             xx_t_mpc = xx_real_mpc[:, tt]  # get initial condition
 
-            cost = 0
-            constr = []
-
-            xx_mpc_var = cp.Variable((constants.NUMBER_OF_STATES, Tpred))
-            uu_mpc_var = cp.Variable((constants.NUMBER_OF_INPUTS, Tpred))
-
-            # Solve MPC problem - apply first input
-            for tt in range(Tpred - 1):
-                AAt = AA[:, :, tt]
-                BBt = BB[:, :, tt]
-                cost += cp.quad_form(xx_mpc_var[:, tt], cst.QQt) + cp.quad_form(uu_mpc_var[:, tt], cst.RRt)
-                constr += [
-                    xx_mpc_var[:, tt + 1] == AAt @ xx_mpc_var[:, tt] + BBt @ uu_mpc_var[:, tt],  # dynamics constraint
-                    uu_mpc_var[:, tt] <= umax,  # other constraints
-                    uu_mpc_var[:, tt] >= umin,
-                    xx_mpc_var[:, tt] <= xmax,
-                    xx_mpc_var[:, tt] >= xmin,
-                ]
-
-            cost += cp.quad_form(xx_mpc_var[:, Tpred - 1], cst.QQT)
-            constr += [xx_mpc_var[:, 0] == xx_t_mpc]
-
-            problem = cp.Problem(cp.Minimize(cost), constr)
-            problem.solve()
-
-            if problem.status == "infeasible":
-                # Otherwise, problem.value is inf or -inf, respectively.
-                print("Infeasible problem! CHECK YOUR CONSTRAINTS!!!")
-
-            uu_real_mpc[:, tt], xx_mpc[:, :, tt] = uu_mpc_var[:, 0].value, xx_mpc_var.value
+            # Solve the MPC problem
+            uu_real_mpc[:, tt] = mpc.linear_mpc(AA[:, :, tt:], BB[:, :, tt:], QQ, RR, QQT, xx_t_mpc, umax, umin, xmax, xmin, Tpred)
 
             xx_real_mpc[:, tt + 1] = dyn.dynamics(xx_real_mpc[:, tt], uu_real_mpc[:, tt])[0]
 
-        plots.mpc_plot(xx_star, uu_star, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin)
+        # xx_real_mpc[:, -1] = xx_real_mpc[:, -Tpred - 1]
+        # xx_real_mpc[:, -2] = xx_real_mpc[:, -Tpred - 1]
+        # xx_real_mpc[:, -3] = xx_real_mpc[:, -Tpred - 1]
+        # xx_real_mpc[:, -4] = xx_real_mpc[:, -Tpred - 1]
+
+        # uu_real_mpc[:, -1] = uu_real_mpc[:, -Tpred - 1]
+        # uu_real_mpc[:, -2] = uu_real_mpc[:, -Tpred - 1]
+        # uu_real_mpc[:, -3] = uu_real_mpc[:, -Tpred - 1]
+        # uu_real_mpc[:, -4] = uu_real_mpc[:, -Tpred - 1]
+        plots.mpc_plot(xx_ref, uu_ref, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin)
 
 
 if __name__ == "__main__":
@@ -223,6 +207,8 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--ref-curve", type=str, choices=["step", "cubic"], default="step", help="Reference curve to follow")
 
     parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton"], default="newton", help="Solver to use")
+
+    parser.add_argument("--lqr", action="store_true", default=False, help="Use LQR")
 
     parser.add_argument("--mpc", action="store_true", default=False, help="Use MPC")
 
@@ -233,6 +219,8 @@ if __name__ == "__main__":
     parser.add_argument("--show-derivative-plots", action="store_true", default=False, help="Show the plots of the derivatives")
 
     parser.add_argument("--show-armijo-plots", action="store_true", default=False, help="Show the Armijo plots")
+
+    parser.add_argument("--hide-opt-plots", action="store_true", default=False, help="Hide the plots of the optimization")
 
     main(parser.parse_args())
 

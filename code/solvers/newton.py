@@ -17,7 +17,7 @@ stepsize_0 = 5.0
 cc = 0.5
 beta = 0.7
 armijo_maxiters = 20
-term_cond = 1e-4
+term_cond = 1e-3
 visu_armijo = True
 
 # Initial guess
