@@ -84,32 +84,10 @@ def main(args):
     else:
         raise ValueError(f"Invalid solver {args.solver}")
 
+    tt_hor = np.linspace(0, constants.TF, constants.TT)
+
     if not args.hide_opt_plots:
-        tt_hor = np.linspace(0, constants.TF, constants.TT)
-        plt.figure()
-        plt.clf()
-        plt.title("Trajectory following")
-        for i in range(constants.NUMBER_OF_STATES):
-            plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
-            plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
-            plt.plot(tt_hor, xx_star[i, :], label=f"State {constants.STATES[i]}")
-
-            plt.grid()
-            plt.legend()
-        plt.show()
-
-        tt_hor = np.linspace(0, constants.TF, constants.TT)
-        plt.figure()
-        plt.clf()
-        plt.title("Trajectory following inputs")
-        for i in range(constants.NUMBER_OF_INPUTS):
-            plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
-            plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
-            plt.plot(tt_hor, uu_star[i, :], label=f"State {constants.INPUTS[i]}")
-
-            plt.grid()
-            plt.legend()
-        plt.show()
+        plots.plot_ref_and_star_trajectories(xx_ref, uu_ref, xx_star, uu_star)
 
     # Defining percentage of errors in state and input
     error = []
@@ -130,12 +108,12 @@ def main(args):
         print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
 
     if args.lqr:
-        xx_tracking, uu_tracking = LQR_tracking(xx_ref, uu_ref)
+        xx_tracking, uu_tracking = LQR_tracking(xx_star, uu_star)
 
         plt.title("Trajectory tracking via LQR")
         for i in range(constants.NUMBER_OF_STATES):
             plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
-            plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+            plt.plot(tt_hor, xx_star[i, :], label=f"Reference curve {constants.STATES[i]}")
             plt.plot(tt_hor, xx_tracking[i, :], label=f"State {constants.STATES[i]}")
 
             plt.grid()
@@ -147,7 +125,7 @@ def main(args):
         plt.title("Trajectory tracking inputs")
         for i in range(constants.NUMBER_OF_INPUTS):
             plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
-            plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+            plt.plot(tt_hor, uu_star[i, :], label=f"Reference curve {constants.INPUTS[i]}")
             plt.plot(tt_hor, uu_tracking[i, :], label=f"State {constants.INPUTS[i]}")
 
             plt.grid()

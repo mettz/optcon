@@ -136,6 +136,33 @@ def derivatives_plot(xx_traj, uu_traj):
     plt.show()
 
 
+def plot_ref_and_star_trajectories(xx_ref, uu_ref, xx_star, uu_star):
+        tt_hor = np.linspace(0, constants.TF, constants.TT)
+        plt.figure()
+        plt.clf()
+        plt.title("Trajectory following")
+        for i in range(constants.NUMBER_OF_STATES):
+            plt.subplot(constants.NUMBER_OF_STATES, 1, 1 + i)
+            plt.plot(tt_hor, xx_ref[i, :], label=f"Reference curve {constants.STATES[i]}")
+            plt.plot(tt_hor, xx_star[i, :], label=f"State {constants.STATES[i]}")
+
+            plt.grid()
+            plt.legend()
+        plt.show()
+        
+        plt.figure()
+        plt.clf()
+        plt.title("Trajectory following inputs")
+        for i in range(constants.NUMBER_OF_INPUTS):
+            plt.subplot(constants.NUMBER_OF_INPUTS, 1, 1 + i)
+            plt.plot(tt_hor, uu_ref[i, :], label=f"Reference curve {constants.INPUTS[i]}")
+            plt.plot(tt_hor, uu_star[i, :], label=f"State {constants.INPUTS[i]}")
+
+            plt.grid()
+            plt.legend()
+        plt.show()
+
+
 ############################
 # Gradient method plots
 ############################

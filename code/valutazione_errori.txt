@@ -220,3 +220,15 @@ Sovraelongation in input delta: 0.010414860159884227
 Sovraelongation in input Fx: -0.0011283116954341156
 
 Non cambia niente! Rimetto 40
+
+
+################  VALUTAZIONE LQR  ################
+Ho notato che mettendo il peso di V maggiore di 1 in Q, tutte le variabili di stato vengono seuguite male. 
+Se V=1 ci sono ancora problemi. 
+Con V=0.5, beta e psi_dot migliorano notevolmente.
+Con v=0.1 migliorano ancora. Però V non migliora.
+
+Con beta=0.1 non mi sembra cambi nulla. 
+Con delta=0.1 peggiora tutto. Lo alzo a 10. Ora beta è seguito quasi alla perfezione, così come delta.
+Alzandolo di più non cambia quasi nulla. Lo metto a 15. 
+Abbassare Fx a 0.1 non cambia nulla. Ce lo lascio.

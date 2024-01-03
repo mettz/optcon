@@ -156,6 +156,10 @@ def gradient_method(xx_ref, uu_ref, **kwargs):
 
         print("Iter = {}\t Descent = {:.3e}\t Cost = {:.3e}".format(kk, descent[kk], JJ[kk]))
 
+        if kk%5 == 0:
+            #Plotting intermediate trajectories
+            plots.plot_ref_and_star_trajectories(xx_ref, uu_ref, xx[:, :, kk], uu[:, :, kk])
+
         if descent[kk] <= term_cond:
             max_iters = kk
 
