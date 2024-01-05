@@ -99,13 +99,13 @@ def main(args):
         error.append(np.abs(uu_ref[i, :] - uu_star[i, :]))
         print(f"Error in input {constants.INPUTS[i]}: {np.mean(error)}")
 
-    # Defining sovraelongation in input
-    sovraelongation = []
+    # Defining overshooting in input
+    overshooting = []
     for i in range(constants.NUMBER_OF_INPUTS):
         max_input_star = np.max(uu_star[i, :])
         max_input_ref = np.max(uu_ref[i, :])
-        sovraelongation.append((max_input_star - max_input_ref) / max_input_ref)
-        print(f"Sovraelongation in input {constants.INPUTS[i]}: {sovraelongation[i]}")
+        overshooting.append((max_input_star - max_input_ref) / max_input_ref)
+        print(f"Overshooting in input {constants.INPUTS[i]}: {overshooting[i]}")
 
     if args.lqr:
         xx_tracking, uu_tracking = LQR_tracking(xx_star, uu_star)
@@ -139,7 +139,7 @@ def main(args):
         xmax = 20
         xmin = -xmax
 
-        xx0 = xx_star[:, 0]  # - np.array([0.1, 0.1, 0.1]) se metto questo viene orribile
+        xx0 = xx_star[:, 0] - np.array([0.001, 0.001, 0.001])
         AA = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
         BB = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT))
 
@@ -167,15 +167,16 @@ def main(args):
 
             xx_real_mpc[:, tt + 1] = dyn.dynamics(xx_real_mpc[:, tt], uu_real_mpc[:, tt])[0]
 
-        # xx_real_mpc[:, -1] = xx_real_mpc[:, -Tpred - 1]
-        # xx_real_mpc[:, -2] = xx_real_mpc[:, -Tpred - 1]
-        # xx_real_mpc[:, -3] = xx_real_mpc[:, -Tpred - 1]
-        # xx_real_mpc[:, -4] = xx_real_mpc[:, -Tpred - 1]
+        # For plotting purposes
+        xx_real_mpc[:, -1] = xx_real_mpc[:, -Tpred - 1]
+        xx_real_mpc[:, -2] = xx_real_mpc[:, -Tpred - 1]
+        xx_real_mpc[:, -3] = xx_real_mpc[:, -Tpred - 1]
+        xx_real_mpc[:, -4] = xx_real_mpc[:, -Tpred - 1]
 
-        # uu_real_mpc[:, -1] = uu_real_mpc[:, -Tpred - 1]
-        # uu_real_mpc[:, -2] = uu_real_mpc[:, -Tpred - 1]
-        # uu_real_mpc[:, -3] = uu_real_mpc[:, -Tpred - 1]
-        # uu_real_mpc[:, -4] = uu_real_mpc[:, -Tpred - 1]
+        uu_real_mpc[:, -1] = uu_real_mpc[:, -Tpred - 1]
+        uu_real_mpc[:, -2] = uu_real_mpc[:, -Tpred - 1]
+        uu_real_mpc[:, -3] = uu_real_mpc[:, -Tpred - 1]
+        uu_real_mpc[:, -4] = uu_real_mpc[:, -Tpred - 1]
         plots.mpc_plot(xx_ref, uu_ref, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin)
 
 
@@ -201,45 +202,3 @@ if __name__ == "__main__":
     parser.add_argument("--hide-opt-plots", action="store_true", default=False, help="Hide the plots of the optimization")
 
     main(parser.parse_args())
-
-    # # Application of the newthon method
-    # # xx_star, uu_star = nmo.newton_method_optcon(xx_ref, uu_ref)
-    # xx_star, uu_star = gradient_method(xx_ref, uu_ref)
-    # # print("xx_star", xx_star.shape)
-    # # print("uu_star", uu_star.shape)
-    # # print("xx_ref", xx_ref.shape)
-    # # print("uu_ref", uu_ref.shape)
-
-    # # fig, axs = plt.subplots(nmo.ns + nmo.ni, 1, sharex="all")
-
-    # # axs[0].plot(tt_hor, xx_star[0, :], linewidth = 2)
-    # # axs[0].plot(tt_hor, xx_ref[0, :], "g--", linewidth = 2)
-    # # axs[0].grid()
-    # # axs[0].set_ylabel("$x_4 = V$")
-    # # axs[0].set_xlabel("time")
-
-    # # axs[1].plot(tt_hor, xx_star[1, :], linewidth = 2)
-    # # axs[1].plot(tt_hor, xx_ref[1, :], "g--", linewidth = 2)
-    # # axs[1].grid()
-    # # axs[1].set_ylabel("$x_5 = \\beta$")
-    # # axs[1].set_xlabel("time")
-
-    # # axs[2].plot(tt_hor, xx_star[2, :], linewidth = 2)
-    # # axs[2].plot(tt_hor, xx_ref[2, :], "g--", linewidth = 2)
-    # # axs[2].grid()
-    # # axs[2].set_ylabel("$x_6 = \\dot{psi}$")
-    # # axs[2].set_xlabel("time")
-
-    # # axs[3].plot(tt_hor, uu_star[0, :], "r", linewidth = 2)
-    # # axs[3].plot(tt_hor, uu_ref[0, :], "r--", linewidth = 2)
-    # # axs[3].grid()
-    # # axs[3].set_ylabel("$u_1 = \\delta$")
-    # # axs[3].set_xlabel("time")
-
-    # # axs[4].plot(tt_hor, uu_star[1, :], "r", linewidth = 2)
-    # # axs[4].plot(tt_hor, uu_ref[1, :], "r--", linewidth = 2)
-    # # axs[4].grid()
-    # # axs[4].set_ylabel("$u_2 = F_x$")
-    # # axs[4].set_xlabel("time")
-
-    # # plt.show()
