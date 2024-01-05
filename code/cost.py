@@ -7,14 +7,6 @@ import dynamics as dyn
 number_of_states = constants.NUMBER_OF_STATES
 number_of_inputs = constants.NUMBER_OF_INPUTS
 
-# QQt = np.array([[10000, 0], [0, 100]]) prof aveva 2 stati e 1 inputs
-# RRt = 1*np.eye(ni)
-
-# nostro caso: QQt 6x6, RRt 2x2
-# Sulla diagonale di QQt metto i pesi per gli stati, sulla diagonale di RRt metto i pesi per gli input
-# Considerando che x, y e psi sono variabili libere direi che possiamo assegnare loro un peso piccolo, mentre per V, beta e psi_dot un peso molto più grande
-# anche perchè l'equilibrio dipende da queste ultime
-
 # Definition the cost matrices
 QQt = np.diag([0.0001, 25, 20])
 RRt = np.diag([32, 1])
