@@ -8,8 +8,8 @@ TF = 10
 TT = int(TF / DT)
 
 # State and input variables
-STATES = ["V", "beta", "psi_dot"]
-INPUTS = ["delta", "Fx"]
+STATES = ["V", "\\beta", "\dot{\psi}"]
+INPUTS = ["\\delta", "F_x"]
 
 # Number of states and inputs
 NUMBER_OF_STATES = len(STATES)
