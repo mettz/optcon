@@ -49,9 +49,9 @@ def main(args):
     uu_star = None
 
     if args.solver == "gradient":
-        xx_star, uu_star = solvers.gradient(xx_ref, uu_ref, show_armijo_plots=args.show_armijo_plots)
+        xx_star, uu_star = solvers.gradient(xx_ref, uu_ref, plotter)
     elif args.solver == "newton":
-        xx_star, uu_star = solvers.newton(xx_ref, uu_ref, show_armijo_plots=args.show_armijo_plots)
+        xx_star, uu_star = solvers.newton(xx_ref, uu_ref, plotter)
     else:
         raise ValueError(f"Invalid solver {args.solver}")
 
@@ -75,9 +75,11 @@ def main(args):
         overshooting.append((max_input_star - max_input_ref) / max_input_ref)
         print(f"Overshooting in input {constants.INPUTS[i]}: {overshooting[i]}")
 
+    print("Starting LQR tracking...")
     xx_lqr, uu_lqr = trackers.lqr(xx_star, uu_star)
     plotter.lqr_plots(xx_star, uu_star, xx_lqr, uu_lqr)
 
+    print("Starting MPC tracking...")
     xx_mpc, uu_mpc = trackers.mpc(xx_star, uu_star)
     plotter.mpc_plots(xx_star, uu_star, xx_mpc, uu_mpc)
 
@@ -85,18 +87,24 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")
 
+    parser.add_argument("--show-derivative-plots", action="store_true", default=False, help="Show derivatives verification plots")
+
     parser.add_argument("-c", "--ref-curve", type=str, choices=["step", "cubic"], default="step", help="Reference curve to follow")
 
     parser.add_argument("-s", "--solver", type=str, choices=["gradient", "newton"], default="newton", help="Solver to use")
 
-    parser.add_argument("--show-ref-curves-plots", action="store_true", default=False, help="Show the plots of the reference curve")
+    parser.add_argument("--show-ref-curves-plots", action="store_true", default=False, help="Show reference curves plots")
 
-    parser.add_argument("--show-verify-equilibria", action="store_true", default=False, help="Show the plots of the verify equilibria")
+    parser.add_argument("--show-verify-equilibria", action="store_true", default=False, help="Show verification of equilibria plots")
 
-    parser.add_argument("--show-derivative-plots", action="store_true", default=False, help="Show the plots of the derivatives")
+    parser.add_argument("--show-solver-plots", action="store_true", default=False, help="Show chosen solver plots such as armijo, descent, costs etc...")
 
-    parser.add_argument("--show-armijo-plots", action="store_true", default=False, help="Show the Armijo plots")
+    parser.add_argument("--show-following-plots", action="store_true", default=False, help="Show optimal trajectories plots")
 
-    parser.add_argument("-q", "--quiet", action="store_true", default=False, help="Do not show any plots")
+    parser.add_argument("--show-lqr-plots", action="store_true", default=False, help="Show LQR tracking plots")
+
+    parser.add_argument("--show-mpc-plots", action="store_true", default=False, help="Show MPC tracking plots")
+
+    parser.add_argument("-q", "--quiet", action="store_true", default=False, help="Do not show any plots (except the ones specified with --show-* flags)")
 
     main(parser.parse_args())

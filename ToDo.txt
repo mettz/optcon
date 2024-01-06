@@ -6,7 +6,6 @@
 5) Aggiungere grafici: "Tracking error for different initial conditions"
 6) Implementare animazione 
 
-Mattia: 2,3,4
 Luca: 1,6
 Daniele: 5
 

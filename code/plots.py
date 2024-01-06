@@ -12,6 +12,10 @@ class Plotter:
         self.show_ref_curves_plots = opts.get("show_ref_curves_plots", False)
         self.show_verify_equilibria_plots = opts.get("show_verify_equilibria", False)
         self.show_derivatives_plots = opts.get("show_derivatives_plots", False)
+        self.show_solver_plots = opts.get("show_solver_plots", False)
+        self.show_following_plots = opts.get("show_following_plots", False)
+        self.show_lqr_plots = opts.get("show_lqr_plots", False)
+        self.show_mpc_plots = opts.get("show_mpc_plots", False)
 
     def _multiplot(self, *curves, **kwargs) -> None:
         if len(curves) == 0:
@@ -122,164 +126,25 @@ class Plotter:
         plt.show()
 
     def following_plots(self, xx_ref, uu_ref, xx_star, uu_star):
-        if self.quiet:
+        if self.quiet and not self.show_following_plots:
             return
 
         self._multiplot(xx_ref, xx_star, title="State trajectory following", ylabels=constants.STATES, legend=["reference", "optimal"])
         self._multiplot(uu_ref, uu_star, title="Input trajectory following", ylabels=constants.INPUTS, legend=["reference", "optimal"])
 
     def lqr_plots(self, xx_star, uu_star, xx_lqr, uu_lqr):
-        if self.quiet:
+        if self.quiet and not self.show_lqr_plots:
             return
 
         self._multiplot(xx_star, xx_lqr, title="State trajectory tracking (LQR)", ylabels=constants.STATES, legend=["optimal", "LQR"])
         self._multiplot(uu_star, uu_lqr, title="Input trajectory tracking (LQR)", ylabels=constants.INPUTS, legend=["optimal", "LQR"])
 
     def mpc_plots(self, xx_star, uu_star, xx_mpc, uu_mpc):
-        if self.quiet:
+        if self.quiet and not self.show_mpc_plots:
             return
 
         self._multiplot(xx_star, xx_mpc, title="State trajectory tracking (MPC)", ylabels=constants.STATES, legend=["optimal", "MPC"])
         self._multiplot(uu_star, uu_mpc, title="Input trajectory tracking (MPC)", ylabels=constants.INPUTS, legend=["optimal", "MPC"])
-
-    ############################
-    # Gradient method plots
-    ############################
-
-    def armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm, JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref):
-        ############################
-        # Armijo plot
-        # UPDATE: ho tolto kk da descent_arm[kk] perchè in cvxpy è stato tolto
-        ############################
-        steps = np.linspace(0, stepsize_0, int(4e1))
-        costs = np.zeros(len(steps))
-
-        for ii in range(len(steps)):
-            step = steps[ii]
-
-            # temp solution update
-
-            xx_temp = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
-            uu_temp = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
-
-            xx_temp[:, 0] = x0
-
-            for tt in range(constants.TT - 1):
-                uu_temp[:, tt] = (
-                    uu[:, tt, kk] + step * deltau[:, tt, kk]
-                )  # prima era deltau[:, tt, kk]. Ho dovuto togliere kk perchè nel codice con CVXPY non c'è. Potrebbe non funzionare altrove
-                xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
-
-            # temp cost calculation
-            JJ_temp = 0
-
-            for tt in range(constants.TT - 1):
-                temp_cost = cst.stagecost(xx_temp[:, tt], uu_temp[:, tt], xx_ref[:, tt], uu_ref[:, tt])[0]
-                JJ_temp += temp_cost
-
-            temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
-            JJ_temp += temp_cost
-
-            # costs[ii] = np.min([JJ_temp, 100 * JJ[kk]]) nostro codice
-            costs[ii] = JJ_temp  # Ste e Davide
-
-        plt.figure(1)
-        plt.clf()
-
-        plt.plot(steps, costs, color="g", label="$J(\\mathbf{u}^k - stepsize*d^k)$")
-
-        plt.plot(steps, JJ[kk] + descent_arm * steps, color="r", label="$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
-
-        plt.plot(steps, JJ[kk] + cc * descent_arm * steps, color="g", linestyle="dashed", label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
-
-        plt.scatter(stepsizes, costs_armijo, marker="*", color="k")  # plot the tested stepsize
-
-        plt.grid()
-        plt.xlabel("stepsize")
-        plt.legend()
-        plt.draw()
-
-        plt.show()
-
-    def gradient_method_plots(xx_ref, uu_ref, max_iters, xx_star, uu_star, descent, JJ, TT, tf, ni, ns):
-        # cost and descent
-
-        plt.figure("descent direction")
-        plt.plot(np.arange(max_iters), descent[:max_iters])
-        plt.xlabel("$k$")
-        plt.ylabel("||$\\nabla J(\\mathbf{u}^k)||$")
-        plt.yscale("log")
-        plt.grid()
-        plt.show(block=False)
-
-        plt.figure("cost")
-        plt.plot(np.arange(max_iters), JJ[:max_iters])
-        plt.xlabel("$k$")
-        plt.ylabel("$J(\\mathbf{u}^k)$")
-        plt.yscale("log")
-        plt.grid()
-        plt.show(block=False)
-
-        # optimal trajectory
-        tt_hor = np.linspace(0, tf, TT)
-        fig, axs = plt.subplots(ns + ni, 1, sharex="all")
-
-        axs[0].plot(tt_hor, xx_star[0, :], linewidth=2)
-        axs[0].plot(tt_hor, xx_ref[0, :], "g--", linewidth=2)
-        axs[0].grid()
-        axs[0].set_ylabel("$x_1$")
-
-        axs[1].plot(tt_hor, xx_star[1, :], linewidth=2)
-        axs[1].plot(tt_hor, xx_ref[1, :], "g--", linewidth=2)
-        axs[1].grid()
-        axs[1].set_ylabel("$x_2$")
-
-        axs[2].plot(tt_hor, uu_star[0, :], "r", linewidth=2)
-        axs[2].plot(tt_hor, uu_ref[0, :], "r--", linewidth=2)
-        axs[2].grid()
-        axs[2].set_ylabel("$u$")
-        axs[2].set_xlabel("time")
-
-        plt.show()
-
-    def mpc_plot(xx_star, uu_star, xx_real_mpc, uu_real_mpc, umax, umin, xmax, xmin):
-        time = np.arange(constants.TT)
-
-        fig, axs = plt.subplots(constants.NUMBER_OF_STATES + constants.NUMBER_OF_INPUTS, 1, sharex="all")
-
-        for idx in range(constants.NUMBER_OF_STATES):
-            axs[idx].plot(time, xx_real_mpc[idx, :], linewidth=2)
-            axs[idx].plot(time, xx_star[idx, :], "--r", linewidth=2)
-            axs[idx].grid()
-            axs[idx].set_ylabel(f"${constants.STATES[idx]}$")
-
-            axs[idx].set_xlim([-1, constants.TT])
-            axs[idx].legend(["MPC", "OPT"])
-
-            if xmax < 1.1 * np.amax(xx_real_mpc[idx, :]):
-                axs[idx].plot(time, np.ones(constants.TT) * xmax, "--g", linewidth=1)
-                axs[idx].plot(time, np.ones(constants.TT) * xmin, "--g", linewidth=1)
-
-        for idx in range(constants.NUMBER_OF_INPUTS):
-            axx = idx + constants.NUMBER_OF_STATES
-
-            axs[axx].plot(time, uu_real_mpc[idx, :], "g", linewidth=2)
-            axs[axx].plot(time, uu_star[idx, :], "--r", linewidth=2)
-            axs[axx].grid()
-            axs[axx].set_ylabel(f"${constants.INPUTS[idx]}$")
-
-            if umax < 1.1 * np.amax(uu_real_mpc[idx, :]):
-                axs[axx].plot(time, np.ones(constants.TT) * umax, "--g", linewidth=1)
-                axs[axx].plot(time, np.ones(constants.TT) * umin, "--g", linewidth=1)
-
-            axs[idx + constants.NUMBER_OF_STATES].set_xlim([-1, constants.TT])
-            axs[idx + constants.NUMBER_OF_STATES].legend(["MPC", "OPT"])
-
-        axs[-1].set_xlabel("time")
-
-        fig.align_ylabels(axs)
-
-        plt.show()
 
     def plot_equilibria(self, eq: Equilibrium):
         # Plot the equilibrium points

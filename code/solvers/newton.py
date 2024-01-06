@@ -18,7 +18,6 @@ cc = 0.5
 beta = 0.7
 armijo_maxiters = 20
 term_cond = 1e-3
-visu_armijo = True
 
 # Initial guess
 xx_init = np.ones((constants.NUMBER_OF_STATES, constants.TT))
@@ -58,9 +57,8 @@ KK = np.zeros((constants.NUMBER_OF_INPUTS, constants.NUMBER_OF_STATES, constants
 sigma = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
 
 
-def newton_method(xx_ref, uu_ref, **kwargs):
+def newton_method(xx_ref, uu_ref, plotter: plots.Plotter):
     global max_iters
-    visu_armijo = kwargs.get("visu_armijo", False)
 
     print("Starting the computation of the optimal trajectory...")
 
@@ -204,8 +202,51 @@ def newton_method(xx_ref, uu_ref, **kwargs):
                 print("Armijo stepsize = {:.3e}".format(stepsize))
                 break
 
-        if visu_armijo and kk % 10 == 0:
-            plots.armijo_plot(stepsize_0, stepsizes, costs_armijo, descent_arm[kk], JJ, kk, cc, x0, uu, deltau, dyn, cst, xx_ref, uu_ref)
+        if plotter.show_solver_plots and kk % 10 == 0:
+            steps = np.linspace(0, stepsize_0, int(2e1))
+            costs = np.zeros(len(steps))
+
+            for ii in range(len(steps)):
+                step = steps[ii]
+
+                # temp solution update
+
+                xx_temp = np.zeros((constants.NUMBER_OF_STATES, constants.TT))
+                uu_temp = np.zeros((constants.NUMBER_OF_INPUTS, constants.TT))
+
+                xx_temp[:, 0] = x0
+
+                for tt in range(constants.TT - 1):
+                    uu_temp[:, tt] = uu[:, tt, kk] + step * deltau[:, tt, kk]
+                    xx_temp[:, tt + 1] = dyn.dynamics(xx_temp[:, tt], uu_temp[:, tt])[0]
+
+                # temp cost calculation
+                JJ_temp = 0
+
+                for tt in range(constants.TT - 1):
+                    temp_cost = cst.stagecost(xx_temp[:, tt], uu_temp[:, tt], xx_ref[:, tt], uu_ref[:, tt])[0]
+                    JJ_temp += temp_cost
+
+                temp_cost = cst.termcost(xx_temp[:, -1], xx_ref[:, -1])[0]
+                JJ_temp += temp_cost
+
+                costs[ii] = np.min([JJ_temp, 100 * JJ[kk]])
+
+            plt.figure(1)
+            plt.clf()
+
+            plt.plot(steps, costs, color="g", label="$J(\\mathbf{u}^k - stepsize*d^k)$")
+            plt.plot(steps, JJ[kk] + descent_arm[kk] * steps, color="r", label="$J(\\mathbf{u}^k) - stepsize*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
+            plt.plot(steps, JJ[kk] + cc * descent_arm[kk] * steps, color="g", linestyle="dashed", label="$J(\\mathbf{u}^k) - stepsize*c*\\nabla J(\\mathbf{u}^k)^{\\top} d^k$")
+
+            plt.scatter(stepsizes, costs_armijo, marker="*")  # plot the tested stepsize
+
+            plt.grid()
+            plt.xlabel("stepsize")
+            plt.legend()
+            plt.draw()
+
+            plt.show()
 
         ############################
         # Update the current solution
@@ -229,9 +270,9 @@ def newton_method(xx_ref, uu_ref, **kwargs):
 
         print("Iter = {}\t Descent = {:.3e}\t Cost = {:.3e}".format(kk, descent[kk], JJ[kk]))
 
-        if kk%5==0 and kk!=0:
-            #Plotting intermediate trajectories
-            plots.plot_ref_and_star_trajectories(xx_ref, uu_ref, xx[:, :, kk], uu[:, :, kk])
+        # Plotting intermediate trajectories
+        if kk % 5 == 0 and kk != 0 and plotter.show_solver_plots:
+            plotter.following_plots(xx_ref, uu_ref, xx[:, :, kk], uu[:, :, kk])
 
         if descent[kk] <= term_cond:
             max_iters = kk
@@ -241,5 +282,24 @@ def newton_method(xx_ref, uu_ref, **kwargs):
     xx_star = xx[:, :, max_iters - 1]
     uu_star = uu[:, :, max_iters - 1]
     uu_star[:, -1] = uu_star[:, -2]  # for plotting purposes
+
+    if plotter.show_solver_plots:
+        plt.figure()
+        plt.title("Descent direction")
+        plt.plot(np.arange(max_iters), descent[:max_iters])
+        plt.xlabel("$k$")
+        plt.ylabel("||$\\nabla J(\\mathbf{u}^k)||$")
+        plt.yscale("log")
+        plt.grid()
+        plt.show(block=False)
+
+        plt.figure()
+        plt.title("Cost")
+        plt.plot(np.arange(max_iters), JJ[:max_iters])
+        plt.xlabel("$k$")
+        plt.ylabel("$J(\\mathbf{u}^k)$")
+        plt.yscale("log")
+        plt.grid()
+        plt.show(block=False)
 
     return xx_star, uu_star
