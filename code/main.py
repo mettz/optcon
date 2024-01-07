@@ -2,6 +2,7 @@ import signal
 import argparse
 import numpy as np
 
+import animation
 import constants
 import curves
 import equilibrium as eq
@@ -83,6 +84,7 @@ def main(args):
     xx_mpc, uu_mpc = trackers.mpc(xx_star, uu_star)
     plotter.mpc_plots(xx_star, uu_star, xx_mpc, uu_mpc)
 
+    ##animation.plotAnimation(xx_ref, xx_star)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")
