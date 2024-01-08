@@ -57,21 +57,20 @@ def main(args):
         xx_star, uu_star = solvers.newton(xx_ref, uu_ref, plotter)
     else:
         raise ValueError(f"Invalid solver {args.solver}")
-    
+
     plotter.following_plots(xx_ref, uu_ref, xx_star, uu_star)
 
-    #Getting X and Y from the optimal trajectory
-    X_pos, Y_pos = dyn.get_X_Y(xx_star)
+    # Getting x, y and psi from the optimal trajectory
+    x, y, psi = dyn.get_X_Y(xx_star)
 
-    #Plotting the position of the car with X as x-axis and Y as y-axis
+    # Plotting the position of the car with X as x-axis and Y as y-axis
     plt.figure()
-    plt.plot(X_pos, Y_pos)
+    plt.plot(x, y)
     plt.title("Position of the car")
     plt.xlabel("X")
     plt.ylabel("Y")
     plt.grid()
     plt.show()
-
 
     # Defining percentage of errors in state and input
     error = []
@@ -100,6 +99,7 @@ def main(args):
     plotter.mpc_plots(xx_star, uu_star, xx_mpc, uu_mpc)
 
     ##animation.plotAnimation(xx_ref, xx_star)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Autonomous Car Optimization")

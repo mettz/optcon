@@ -1,6 +1,6 @@
 import numpy as np
 
-from constants import DT, NUMBER_OF_STATES
+from constants import DT, NUMBER_OF_STATES, TT
 
 # Definition of the vehicle parameters
 mass = 1480  # Kg
@@ -208,18 +208,16 @@ def trajectory(points, xx, uu):
 
     return steps, trajectory_xx, trajectory_uu
 
+
 def get_X_Y(xx):
     V, beta, psi_dot = xx
-    X_pos_plus = np.zeros((NUMBER_OF_STATES,))
-    Y_pos_plus = np.zeros((NUMBER_OF_STATES,))
+    x = np.zeros(TT)
+    y = np.zeros(TT)
+    psi = np.zeros(TT)
 
-    #Integrate psi_dot to get psi
-    psi = np.zeros((NUMBER_OF_STATES,))
-    for tt in range(len(xx)):
-        psi[tt] = np.trapz(psi_dot[0:tt], dx=DT)
-    
-    for tt in range(len(xx)-1):
-        X_pos_plus[tt+1] = X_pos_plus[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.cos(psi[tt]) - V[tt] * np.sin(beta[tt]) * np.sin(psi[tt]))
-        Y_pos_plus[tt+1] = X_pos_plus[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.sin(psi[tt]) + V[tt] * np.sin(beta[tt]) * np.cos(psi[tt]))
+    for tt in range(TT - 1):
+        psi[tt + 1] = psi[tt] + DT * psi_dot[tt]  # Discrete time
+        x[tt + 1] = x[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.cos(psi[tt]) - V[tt] * np.sin(beta[tt]) * np.sin(psi[tt]))
+        y[tt + 1] = y[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.sin(psi[tt]) + V[tt] * np.sin(beta[tt]) * np.cos(psi[tt]))
 
-    return X_pos_plus, Y_pos_plus
+    return x, y, psi

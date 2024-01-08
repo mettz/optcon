@@ -1,5 +1,5 @@
 # Discretization step
-DT = 0.001
+DT = 0.01
 
 # Final time of the trajectory
 TF = 5

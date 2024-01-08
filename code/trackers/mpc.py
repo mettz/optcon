@@ -5,7 +5,7 @@ import constants
 import dynamics as dyn
 
 
-def mpc_step(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20, x2_max=20, x2_min=-20, T_pred=5):
+def mpc_step(AA, BB, QQ, RR, QQf, xxt, T_pred, xx_star, uu_star):
     """
     Linear MPC solver - Constrained LQR
 
@@ -36,12 +36,12 @@ def mpc_step(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20, x
     for tau in range(min(T_pred - 1, samples)):
         AAt = AA[:, :, tau]
         BBt = BB[:, :, tau]
-        cost += cp.quad_form(xx_mpc[:, tau], QQ) + cp.quad_form(uu_mpc[:, tau], RR)
+        cost += cp.quad_form(xx_mpc[:, tau] - xx_star[:, tau], QQ) + cp.quad_form(uu_mpc[:, tau] - uu_star[:, tau], RR)
         constr += [
             xx_mpc[:, tau + 1] == AAt @ xx_mpc[:, tau] + BBt @ uu_mpc[:, tau],  # dynamics constraint
         ]
     # sums problem objectives and concatenates constraints.
-    cost += cp.quad_form(xx_mpc[:, T_pred - 1], QQf)
+    cost += cp.quad_form(xx_mpc[:, -1] - xx_star[:, -1], QQf)
     constr += [xx_mpc[:, 0] == xxt]
 
     problem = cp.Problem(cp.Minimize(cost), constr)
@@ -55,19 +55,15 @@ def mpc_step(AA, BB, QQ, RR, QQf, xxt, umax=1, umin=-1, x1_max=20, x1_min=-20, x
 
 
 def mpc(xx_star, uu_star):
-    Tpred = 50
-    umax = 1
-    umin = -umax
-    xmax = 20
-    xmin = -xmax
+    Tpred = 10
 
-    xx0 = xx_star[:, 0] - np.array([0.001, 0.001, 0.001])
+    xx0 = xx_star[:, 0] - np.array([0.1, 0.1, 0.1])
     AA = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_STATES, constants.TT))
     BB = np.zeros((constants.NUMBER_OF_STATES, constants.NUMBER_OF_INPUTS, constants.TT))
 
-    QQ = np.diag([1, 400, 400])
-    QQT = QQ * 700
-    RR = np.diag([0.5, 0.5])
+    QQ = np.diag([1, 10, 5])
+    QQT = QQ * 10
+    RR = np.diag([50, 0.5])
 
     for tt in range(constants.TT):
         fx, fu = dyn.dynamics(xx_star[:, tt], uu_star[:, tt])[1:]
@@ -84,10 +80,14 @@ def mpc(xx_star, uu_star):
         # System evolution - real with MPC
         xx_t_mpc = xx_real_mpc[:, tt]  # get initial condition
 
+        if tt % 5 == 0:  # print every 5 time instants
+            print("MPC:\t t = {}".format(tt))
+
         # Solve the MPC problem
-        uu_real_mpc[:, tt] = mpc_step(AA[:, :, tt:], BB[:, :, tt:], QQ, RR, QQT, xx_t_mpc, umax, umin, xmax, xmin, Tpred)
+        uu_real_mpc[:, tt] = mpc_step(AA[:, :, tt:], BB[:, :, tt:], QQ, RR, QQT, xx_t_mpc, Tpred, xx_star[:, tt:], uu_star[:, tt:])
 
         xx_real_mpc[:, tt + 1] = dyn.dynamics(xx_real_mpc[:, tt], uu_real_mpc[:, tt])[0]
+        print(xx_real_mpc[0, 0:20] - xx_star[0, 0:20])
 
     # For plotting purposes
     xx_real_mpc[:, -1] = xx_real_mpc[:, -Tpred - 1]
