@@ -9,6 +9,8 @@ import equilibrium as eq
 import solvers
 import plots
 import trackers
+import dynamics as dyn
+import matplotlib.pyplot as plt
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
@@ -55,8 +57,21 @@ def main(args):
         xx_star, uu_star = solvers.newton(xx_ref, uu_ref, plotter)
     else:
         raise ValueError(f"Invalid solver {args.solver}")
-
+    
     plotter.following_plots(xx_ref, uu_ref, xx_star, uu_star)
+
+    #Getting X and Y from the optimal trajectory
+    X_pos, Y_pos = dyn.get_X_Y(xx_star)
+
+    #Plotting the position of the car with X as x-axis and Y as y-axis
+    plt.figure()
+    plt.plot(X_pos, Y_pos)
+    plt.title("Position of the car")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.grid()
+    plt.show()
+
 
     # Defining percentage of errors in state and input
     error = []

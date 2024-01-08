@@ -6,11 +6,12 @@ import constants
 
 
 def lqr(xx_star, uu_star):
-    x0 = xx_star[:, 0] - np.array([0.1, 0.1, 0.1])
+
+    x0 = xx_star[:, 0] - np.array([0, 0.1, 0.1])
 
     # Step 0: define the cost matrices
-    QQ_reg = np.diag([0.1, 1, 10])
-    QQ_reg_T = QQ_reg
+    QQ_reg = np.diag([0.1, 10, 10])
+    QQ_reg_T = QQ_reg #Cambiare 
     RR_reg = np.diag([15, 0.1])
 
     # Step 1: linearize the dynamics around the optimal trajectory (slide 3 pacco 9)

@@ -1,8 +1,8 @@
 # Discretization step
-DT = 0.01
+DT = 0.001
 
 # Final time of the trajectory
-TF = 10
+TF = 5
 
 # Number of time steps
 TT = int(TF / DT)

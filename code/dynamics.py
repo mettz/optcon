@@ -207,3 +207,19 @@ def trajectory(points, xx, uu):
         trajectory_uu[i, :] = uu
 
     return steps, trajectory_xx, trajectory_uu
+
+def get_X_Y(xx):
+    V, beta, psi_dot = xx
+    X_pos_plus = np.zeros((NUMBER_OF_STATES,))
+    Y_pos_plus = np.zeros((NUMBER_OF_STATES,))
+
+    #Integrate psi_dot to get psi
+    psi = np.zeros((NUMBER_OF_STATES,))
+    for tt in range(len(xx)):
+        psi[tt] = np.trapz(psi_dot[0:tt], dx=DT)
+    
+    for tt in range(len(xx)-1):
+        X_pos_plus[tt+1] = X_pos_plus[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.cos(psi[tt]) - V[tt] * np.sin(beta[tt]) * np.sin(psi[tt]))
+        Y_pos_plus[tt+1] = X_pos_plus[tt] + DT * (V[tt] * np.cos(beta[tt]) * np.sin(psi[tt]) + V[tt] * np.sin(beta[tt]) * np.cos(psi[tt]))
+
+    return X_pos_plus, Y_pos_plus
